@@ -1,0 +1,5 @@
+Dear {{ user.username }},
+
+To validate your email please click on the following link:
+
+{{ url_for('auth.validate_user', token=token, _external=True) }}

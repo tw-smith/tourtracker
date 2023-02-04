@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1 id="draw">Tour Tracker</h1>
+
+  {% with messages = get_flashed_messages() %}
+  {% if messages %}
+  {% for message in messages %}
+      <h3 class="text text--red">{{ message }}</h3>
+  {% endfor %}
+  {% endif %}
+  {% endwith %}
+  <p>User email: {{ email }}</p>
+
+
+
+
+
+
+ 
+  {% if strava_authenticated %}
+    <form id="datePickerForm">
+    </form>
+
+    <form>
+      <button type="submit" formaction={{ url_for('strava_api_auth.refresh_tokens') }}>Refresh tokens</button>
+      <button type="submit" formaction={{ url_for('auth.logout') }}>Log Out</button>
+    </form>
+
+
+  {% else %}
+    <form>
+    <button type="submit" formaction={{ url_for('strava_api_auth.strava_auth') }}>Link Strava</button>
+    <button type="submit" formaction={{ url_for('auth.logout') }}>Log Out</button>
+   </form>
+  {% endif %}
+
+  <div id="map"></div>
+  <script async
+  src="https://maps.googleapis.com/maps/api/js?key={{config['GOOGLE_MAPS_API_KEY']}}&callback=initMap&v=weekly"
+  defer
+  ></script>
+
+
+{#
+    <!--  {% if strava_authenticated %}
+    <form class="form" action="/get_activities" method="post" novalidate>
+      {{ form.hidden_tag() }}
+      {{ form.start_date(class_="form__item") }}
+      {% for error in form.start_date.errors %}
+      <p class="text__formerror">{{ error }}</p>
+      {% endfor %}
+      {{ form.end_date(class_="form__item") }}
+      {% for error in form.end_date.errors %}
+      <p class="text__formerror">{{ error }}</p>
+      {% endfor %}
+      {{ form.submit(class_="form__item") }}
+  </form> -->
+#}
+
+   
+  {% endblock %}
+
+
+ 
+
+
+
+
+
+
+
+    
