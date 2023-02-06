@@ -16,17 +16,17 @@ def strava_token_request(grant_type, code=None, refresh_token=None):
     response_json = response.json()
     return response_json
 
-@bp.route('/refresh_tokens')
-def refresh_tokens():
-    response = strava_token_request('refresh_token', refresh_token=current_user.strava_refresh_token[0].refresh_token)
-    strava_access_token = db.session.execute(db.Select(StravaAccessToken).filter_by(athlete_id=current_user.strava_athlete_id)).first()
-    strava_refresh_token = db.session.execute(db.Select(StravaRefreshToken).filter_by(athlete_id=current_user.strava_athlete_id)).first()
-    strava_access_token[0].access_token = response['access_token']
-    strava_access_token[0].expires_at = response['expires_at']
-    strava_refresh_token[0].refresh_token = response['refresh_token']
-    print(strava_refresh_token[0].refresh_token)
-    db.session.commit()
-    return redirect(url_for('main.user_profile'))
+# @bp.route('/refresh_tokens')
+# def refresh_tokens():
+#     response = strava_token_request('refresh_token', refresh_token=current_user.strava_refresh_token[0].refresh_token)
+#     strava_access_token = db.session.execute(db.Select(StravaAccessToken).filter_by(athlete_id=current_user.strava_athlete_id)).first()
+#     strava_refresh_token = db.session.execute(db.Select(StravaRefreshToken).filter_by(athlete_id=current_user.strava_athlete_id)).first()
+#     strava_access_token[0].access_token = response['access_token']
+#     strava_access_token[0].expires_at = response['expires_at']
+#     strava_refresh_token[0].refresh_token = response['refresh_token']
+#     print(strava_refresh_token[0].refresh_token)
+#     db.session.commit()
+#     return redirect(url_for('main.user_profile'))
 
 
 
@@ -41,7 +41,11 @@ def strava_auth():
 @bp.route('/token_exchange')
 def token_exchange():
     code = request.args['code']
-    response = strava_token_request('authorization_code', code=code)
+    client_id = current_app.config['STRAVA_CLIENT_ID']
+    client_secret = current_app.config['STRAVA_CLIENT_SECRET']
+    post_data = {'client_id': client_id, 'client_secret': client_secret, 'code': code, 'grant_type': 'authorization_code'}
+    response = requests.post('https://www.strava.com/api/v3/oauth/token', json=post_data)
+    response = response.json()
     expires_at = response['expires_at']
     refresh_token = response['refresh_token']
     access_token = response['access_token']

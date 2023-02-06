@@ -9,6 +9,7 @@ import polyline
 from urllib.parse import urlencode
 import requests
 from datetime import datetime
+import time
 
 
 
@@ -46,8 +47,16 @@ def get_activities():
     start_timestamp = (datetime.strptime(start_date, date_format) - epoch).total_seconds()
     end_timestamp = (datetime.strptime(end_date, date_format) - epoch).total_seconds()
     base_url = 'https://www.strava.com/api/v3/athlete/activities'
+
+    # Get access token
+    access_token = current_user.strava_access_token[0]
+
+    # Check if access token has expired, and if so, refresh tokens
+    if access_token.check_token_valid() == False:
+        access_token.refresh_access_token(current_user.strava_refresh_token[0])
+
     headers = {'Authorization': 'Bearer ' + current_user.strava_access_token[0].access_token}
-    params = dict(before=end_timestamp, after=start_timestamp, page=1, per_page=30) #TODO results per page and nmber of pages?
+    params = dict(before=end_timestamp, after=start_timestamp, page=1, per_page=30)
     activities = []
     while True:
         full_url = base_url + ("?" + urlencode(params) if params else "") #TODO check if token is valid
@@ -57,67 +66,13 @@ def get_activities():
         if (not response):
             break
         for activity in response:
+            if activity['sport_type'] != 'Ride':
+                continue
             latlong = []
             points = polyline.decode(activity['map']['summary_polyline'])
             for point in points:
                 latlong.append({'lat': point[0], 'lng': point[1]})
             activities.append({'activity_id': activity['id'], 'points': latlong})
-            params['page'] += 1
+        params['page'] += 1
+        print("page number" + str(params['page']))
     return make_response(activities, 200)
-
-    
-
-
-    # print(response.json())
-    
-
-    
-    
-    
-
-
-
-
-
-        # st_polyline = "gtbyHftmNgGeNaA{GcC^OGWaGE_FQ_@wAgAu@Kg@RWXuBjDsDxJUFmBmDmAmDY_@aQcHcGgCsAu@gLsEiAmAS_@JmCCWWnAu@NGSkDkq@LsFBwKl@om@A_G\\qb@R}D^cDvB}MhAgGx@wFbFqUz@eJb@_Df@wBpA{CbB{BrBwAhBs@vBYb@RvExGzAjDpCLRGr@mAv@YvBHbARr@\\\\CPe@j@}FxBf@`AAdBm@rByA\\Ap@Th@E`CuBfAoApMuRzFeHfEuDh@QX_@x@k@dEcC~GcF~HmIvAkBbFsI~A{BrB_CtBcBvBuAxC_B|CoA|Ba@rFWbCDnD`@hAX|FzBxBxArGfGdD|EfC~EnCvGbDbHvBfDnC`DxEfElBnAnCjAlARpCdAhARvCJj@GBK`A\\jAg@l@s@`H_DpAU\\D\\XNf@L?lFoDzBuB~EqGbNoSzGuKd]mh@bHcJdFwFdGoFvA}AlC{BtDqCz@c@`\\uUT_@`@C`EyBjWkKlFqCpCsB`GgFtAkBnBuB|BmDfEuHbCuFjCcHzLu`@`BwH|@eF~@_Hx@qJl@sFrAyPnBwRPkD`B_PRcDZ}B|Dmb@zA}P|@eFrAeGXsBdBmGnCkIrAsDt@yA`@IYH[b@{EzLoChKa@fCmAlFw@nFaBdPq@vJs@~FiBpRQpC{AvNc@lGc@fDa@lF_@rCuAdQgDjZeAbH}DvO}G`TaCfIaAfCmBhE}ExIuDlFeG~GaDrCaIzEmP|G{GjCkGjD}OpLqCbB_D`C_DjBkGhFiGhGiBzAuH~I_IvKoc@jq@yBrDsDfFkFdI_BrByAzAgCpBcDnBM?Me@OM_@AYUaAFkDbBuEpB[Jq@GK`@sBYmD{@}@?}AWwAa@cEmBcBaAsC_C_AeAsC_EgB{CoBiE{CyHcAsBaDqFi@q@kEcEyBmBiEaCqCaAuFaAyDI}Gh@wF~BwEzCiA~@mClCuIxMoDpEiCrCsHlGyFlDcAt@QXc@J}ExDoCrCsQ|WmDvDc@LuAYkBtAiAj@c@HsBEmAWK^a@vESb@_@D{Ai@qCUm@R_AtAQFsCM{@eCoA_CaBqBaAyAc@Uy@ZaBTcA`@uCxB}@lA}AtDq@rCa@jDe@hGaBlIgBtHiDzSU~@KzA{@jEm@rEYbFc@nf@DlCClBDjAw@|n@GPFZDrEIlCr@bL^fMvArVDLl@ENi@Fa@JTCnCLXjAhAxK`EhB`AzX~K^`@bBlE|AhCJALQzCeIdCmEjAq@`CzAH?NS@vEL`GJx@PHrBYx@`GLj@`GtM";
-        # points = polyline.decode(st_polyline)
-        # latlong = []
-        # for point in points:
-        #     latlong.append({'lat': point[0], 'lng': point[1]})
-        # return make_response(latlong, 200)
-
-
-
-
-
-        # if request.form.validate_on_submit():
-        #     epoch = datetime(1970,1,1)
-        #     date_format = "%Y-%m-%d"
-        #     start_date = request.form.start_date
-        #     end_date = request.form.end_date
-        #     start_timestamp = (datetime.strptime(start_date, date_format) - epoch).total_seconds()
-        #     end_timestamp = (datetime.strptime(end_date, date_format)- epoch).total_seconds()
-        #     params = dict(before=end_timestamp, after=start_timestamp, page=1, per_page=3)
-        #     full_url = base_url + ("?" + urlencode(params) if params else "")
-        #     headers = {'Authorization': 'Bearer ' + 'ACCESS_CODE'}
-        #     res = requests.get(full_url, headers=headers)
-        #     print(res.json())
-        #     return make_response(res, 200)
-        #     #return render_template('user_profile.html')
-
-
-
-
-
-
-
-
-
-    # st_polyline = "gtbyHftmNgGeNaA{GcC^OGWaGE_FQ_@wAgAu@Kg@RWXuBjDsDxJUFmBmDmAmDY_@aQcHcGgCsAu@gLsEiAmAS_@JmCCWWnAu@NGSkDkq@LsFBwKl@om@A_G\\qb@R}D^cDvB}MhAgGx@wFbFqUz@eJb@_Df@wBpA{CbB{BrBwAhBs@vBYb@RvExGzAjDpCLRGr@mAv@YvBHbARr@\\\\CPe@j@}FxBf@`AAdBm@rByA\\Ap@Th@E`CuBfAoApMuRzFeHfEuDh@QX_@x@k@dEcC~GcF~HmIvAkBbFsI~A{BrB_CtBcBvBuAxC_B|CoA|Ba@rFWbCDnD`@hAX|FzBxBxArGfGdD|EfC~EnCvGbDbHvBfDnC`DxEfElBnAnCjAlARpCdAhARvCJj@GBK`A\\jAg@l@s@`H_DpAU\\D\\XNf@L?lFoDzBuB~EqGbNoSzGuKd]mh@bHcJdFwFdGoFvA}AlC{BtDqCz@c@`\\uUT_@`@C`EyBjWkKlFqCpCsB`GgFtAkBnBuB|BmDfEuHbCuFjCcHzLu`@`BwH|@eF~@_Hx@qJl@sFrAyPnBwRPkD`B_PRcDZ}B|Dmb@zA}P|@eFrAeGXsBdBmGnCkIrAsDt@yA`@IYH[b@{EzLoChKa@fCmAlFw@nFaBdPq@vJs@~FiBpRQpC{AvNc@lGc@fDa@lF_@rCuAdQgDjZeAbH}DvO}G`TaCfIaAfCmBhE}ExIuDlFeG~GaDrCaIzEmP|G{GjCkGjD}OpLqCbB_D`C_DjBkGhFiGhGiBzAuH~I_IvKoc@jq@yBrDsDfFkFdI_BrByAzAgCpBcDnBM?Me@OM_@AYUaAFkDbBuEpB[Jq@GK`@sBYmD{@}@?}AWwAa@cEmBcBaAsC_C_AeAsC_EgB{CoBiE{CyHcAsBaDqFi@q@kEcEyBmBiEaCqCaAuFaAyDI}Gh@wF~BwEzCiA~@mClCuIxMoDpEiCrCsHlGyFlDcAt@QXc@J}ExDoCrCsQ|WmDvDc@LuAYkBtAiAj@c@HsBEmAWK^a@vESb@_@D{Ai@qCUm@R_AtAQFsCM{@eCoA_CaBqBaAyAc@Uy@ZaBTcA`@uCxB}@lA}AtDq@rCa@jDe@hGaBlIgBtHiDzSU~@KzA{@jEm@rEYbFc@nf@DlCClBDjAw@|n@GPFZDrEIlCr@bL^fMvArVDLl@ENi@Fa@JTCnCLXjAhAxK`EhB`AzX~K^`@bBlE|AhCJALQzCeIdCmEjAq@`CzAH?NS@vEL`GJx@PHrBYx@`GLj@`GtM";
-    # points = polyline.decode(st_polyline)
-    # latlong = []
-    # for point in points:
-    #     latlong.append({'lat': point[0], 'lng': point[1]})
-    # return jsonify(latlong=latlong)
-
-    

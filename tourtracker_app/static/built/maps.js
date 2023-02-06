@@ -87,6 +87,9 @@ function HSVToHex(h, s, v) {
     });
     return hex.join('');
 }
+function activityPopUp(eventArgs, polyLine) {
+    polyLine.strokeColor = '000000';
+}
 function drawMap(points) {
     const hue = Math.floor(Math.random() * 360);
     const saturation = 100;
@@ -96,6 +99,10 @@ function drawMap(points) {
         strokeColor: '#' + HSVToHex(hue, saturation, value),
         strokeOpacity: 1.0,
         strokeWeight: 2,
+        clickable: true,
+    });
+    google.maps.event.addListener(path, 'click', function (e) {
+        activityPopUp(e, this);
     });
     console.log(path);
     console.log('#' + HSVToHex(hue, saturation, value));
