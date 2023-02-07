@@ -72,7 +72,10 @@ def get_activities():
             points = polyline.decode(activity['map']['summary_polyline'])
             for point in points:
                 latlong.append({'lat': point[0], 'lng': point[1]})
-            activities.append({'activity_id': activity['id'], 'points': latlong})
+            activities.append({'activity_id': activity['id'],
+                               'activity_name': activity['name'],
+                               'activity_date': activity['start_date_local'],
+                               'points': latlong})
         params['page'] += 1
         print("page number" + str(params['page']))
     return make_response(activities, 200)

@@ -7,7 +7,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+//import 'google.maps'
 let map;
+function initMap() {
+    map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 51.454, lng: -2.857 },
+        zoom: 8,
+    });
+}
+window.initMap = initMap;
+// class mapPath extends google.maps.Polyline {
+//     path_name: string
+// }
 // document.getElementById("draw").addEventListener('click', ()  => draw())
 function postDatePicker() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -28,7 +39,7 @@ function postDatePicker() {
             let result = yield response.json();
             console.log(result);
             result.forEach(element => {
-                drawMap(element.points);
+                drawMap(element);
             });
         }
     });
@@ -88,19 +99,30 @@ function HSVToHex(h, s, v) {
     return hex.join('');
 }
 function activityPopUp(eventArgs, polyLine) {
-    polyLine.strokeColor = '000000';
+    console.log('line click');
+    polyLine.setOptions({
+        strokeColor: '#000000'
+    });
+    let infowindow = new google.maps.InfoWindow({
+        content: polyLine.path_name
+    });
+    infowindow.open(map);
+    // polyLine.strokeColor = '000000'
+    // polyLine.setMap(map)
 }
-function drawMap(points) {
+function drawMap(element) {
     const hue = Math.floor(Math.random() * 360);
     const saturation = 100;
     const value = 100;
-    const path = new google.maps.Polyline({
-        path: points,
+    //const path = new google.maps.Polyline({
+    let path = new google.maps.Polyline({
+        path: element.points,
         strokeColor: '#' + HSVToHex(hue, saturation, value),
         strokeOpacity: 1.0,
         strokeWeight: 2,
         clickable: true,
     });
+    // path.path_name = 'test path name'
     google.maps.event.addListener(path, 'click', function (e) {
         activityPopUp(e, this);
     });
@@ -127,11 +149,4 @@ document.addEventListener("DOMContentLoaded", () => {
         submitButton.addEventListener("click", postDatePicker);
     }
 });
-function initMap() {
-    map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 51.454, lng: -2.857 },
-        zoom: 8,
-    });
-}
-window.initMap = initMap;
 export {};

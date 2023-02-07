@@ -1,6 +1,31 @@
+export {};
+//import 'google.maps'
 let map: google.maps.Map;
 
-export {};
+
+function initMap(): void {
+    map = new google.maps.Map(document.getElementById("map") as HTMLElement, {
+        center: {lat: 51.454, lng: -2.857},
+        zoom: 8,
+    })
+}
+
+declare global {
+    interface Window {
+        initMap: () => void;
+    }
+}
+
+
+window.initMap = initMap;
+
+
+
+// class mapPath extends google.maps.Polyline {
+//     path_name: string
+// }
+
+
 
 
 // document.getElementById("draw").addEventListener('click', ()  => draw())
@@ -26,7 +51,7 @@ async function postDatePicker(): Promise<void> {
         let result = await response.json();
         console.log(result)
         result.forEach(element => {
-            drawMap(element.points)
+            drawMap(element)
         });
     }
 }
@@ -76,21 +101,33 @@ function HSVToHex(h: number,s: number,v: number): string {
 }
 
 function activityPopUp(eventArgs, polyLine) {
-    polyLine.strokeColor = '000000'
+    console.log('line click')
+    polyLine.setOptions({
+        strokeColor: '#000000'
+    })
+    let infowindow = new google.maps.InfoWindow({
+        content: polyLine.path_name
+    })
+    infowindow.open(map)
+    // polyLine.strokeColor = '000000'
+    // polyLine.setMap(map)
 }
 
-function drawMap(points): void {
+function drawMap(element): void {
     const hue = Math.floor(Math.random()*360);
     const saturation = 100;
     const value = 100;
 
-    const path = new google.maps.Polyline({
-        path: points,
+    //const path = new google.maps.Polyline({
+    let path = new google.maps.Polyline({
+        path: element.points,
         strokeColor: '#' + HSVToHex(hue, saturation, value),
         strokeOpacity: 1.0,
         strokeWeight: 2,
         clickable: true,
     });
+   // path.path_name = 'test path name'
+
     google.maps.event.addListener(path, 'click', function(e) {
         activityPopUp(e, this)
     })
@@ -98,13 +135,6 @@ function drawMap(points): void {
     console.log('#' + HSVToHex(hue, saturation, value))
     path.setMap(map)
 }
-
-    
-
-
-
-
-
 
 document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("datePickerForm")) {
@@ -130,24 +160,3 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-function initMap(): void {
-    map = new google.maps.Map(document.getElementById("map") as HTMLElement, {
-        center: {lat: 51.454, lng: -2.857},
-        zoom: 8,
-    })
-}
-
-
-
-
-
-
-
-declare global {
-    interface Window {
-        initMap: () => void;
-    }
-}
-
-
-window.initMap = initMap;
