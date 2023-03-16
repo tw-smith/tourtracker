@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
   <h1 id="draw">Tour Tracker</h1>
-  <form>
-    <button type="submit" formaction={{ url_for('auth.login') }}>Log In</button>
-    <button type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>
+  <form class="form">
+    <button class="form__item button" type="submit" formaction={{ url_for('auth.login') }}>Log In</button>
+    <button class="form__item button" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>
   </form>
 
 

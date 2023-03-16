@@ -18,9 +18,9 @@
             {% for error in form.password.errors %}
             <p class="text__formerror">{{ error }}</p>
             {% endfor %}
-            {{ form.submit(class_="form__item") }}
+            {{ form.submit(class_="form__item button") }}
         </form>
         <form class="form">
-            <button type="submit" class="form__item" formaction={{ url_for('auth.request_password_reset') }}>Forgotten password?</button>
+            <button type="submit" class="form__item button" formaction={{ url_for('auth.request_password_reset') }}>Forgotten password?</button>
         </form>
 {% endblock %}

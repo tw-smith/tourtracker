@@ -16,3 +16,23 @@ h1 {
     height: 400px;
     width: 100%;
 }
+
+
+:root {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+}
+
+.form__item {
+    margin: 0.25rem;
+}
+
+/* .button {
+    margin: 0.5rem;
+} */
