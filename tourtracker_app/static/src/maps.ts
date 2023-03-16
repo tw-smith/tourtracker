@@ -53,6 +53,9 @@ async function postDatePicker(): Promise<void> {
         result.forEach(element => {
             drawMap(element)
         });
+        const finalActivity = result[result.length - 1];
+        const finalLatLong = finalActivity.points[finalActivity.points.length - 1];
+        map.panTo(finalLatLong);
     }
 }
 

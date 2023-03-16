@@ -41,6 +41,10 @@ function postDatePicker() {
             result.forEach(element => {
                 drawMap(element);
             });
+            const finalActivity = result[result.length - 1];
+            const finalLatLong = finalActivity.points[finalActivity.points.length - 1];
+            console.log(finalLatLong);
+            map.panTo(finalLatLong);
         }
     });
 }
