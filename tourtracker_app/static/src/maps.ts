@@ -7,6 +7,7 @@ function initMap(): void {
     map = new google.maps.Map(document.getElementById("map") as HTMLElement, {
         center: {lat: 51.454, lng: -2.857},
         zoom: 8,
+        mapTypeId: 'terrain',
     })
 }
 
@@ -18,17 +19,6 @@ declare global {
 
 
 window.initMap = initMap;
-
-
-
-// class mapPath extends google.maps.Polyline {
-//     path_name: string
-// }
-
-
-
-
-// document.getElementById("draw").addEventListener('click', ()  => draw())
 
 
 async function postDatePicker(): Promise<void> {
@@ -103,19 +93,6 @@ function HSVToHex(h: number,s: number,v: number): string {
     return hex.join('')   
 }
 
-function activityPopUp(eventArgs, polyLine) {
-    console.log('line click')
-    polyLine.setOptions({
-        strokeColor: '#000000'
-    })
-    let infowindow = new google.maps.InfoWindow({
-        content: polyLine.path_name
-    })
-    infowindow.open(map)
-    // polyLine.strokeColor = '000000'
-    // polyLine.setMap(map)
-}
-
 function drawMap(element): void {
     const hue = Math.floor(Math.random()*360);
     const saturation = 100;
@@ -130,12 +107,14 @@ function drawMap(element): void {
         clickable: true,
     });
    // path.path_name = 'test path name'
-
+    let infoWindow = new google.maps.InfoWindow;
     google.maps.event.addListener(path, 'click', function(e) {
-        activityPopUp(e, this)
+        infoWindow.setPosition(e.latLng);
+        infoWindow.setContent("<p>" + element.activity_name + "</p>" +
+                              "<p>" + element.activity_date + "</p>")
+        infoWindow.open(map)
     })
-    console.log(path)
-    console.log('#' + HSVToHex(hue, saturation, value))
+
     path.setMap(map)
 }
 

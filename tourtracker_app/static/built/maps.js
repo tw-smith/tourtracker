@@ -13,13 +13,10 @@ function initMap() {
     map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 51.454, lng: -2.857 },
         zoom: 8,
+        mapTypeId: 'terrain',
     });
 }
 window.initMap = initMap;
-// class mapPath extends google.maps.Polyline {
-//     path_name: string
-// }
-// document.getElementById("draw").addEventListener('click', ()  => draw())
 function postDatePicker() {
     return __awaiter(this, void 0, void 0, function* () {
         const form = document.getElementById("datePickerForm");
@@ -43,7 +40,6 @@ function postDatePicker() {
             });
             const finalActivity = result[result.length - 1];
             const finalLatLong = finalActivity.points[finalActivity.points.length - 1];
-            console.log(finalLatLong);
             map.panTo(finalLatLong);
         }
     });
@@ -102,18 +98,6 @@ function HSVToHex(h, s, v) {
     });
     return hex.join('');
 }
-function activityPopUp(eventArgs, polyLine) {
-    console.log('line click');
-    polyLine.setOptions({
-        strokeColor: '#000000'
-    });
-    let infowindow = new google.maps.InfoWindow({
-        content: polyLine.path_name
-    });
-    infowindow.open(map);
-    // polyLine.strokeColor = '000000'
-    // polyLine.setMap(map)
-}
 function drawMap(element) {
     const hue = Math.floor(Math.random() * 360);
     const saturation = 100;
@@ -127,11 +111,13 @@ function drawMap(element) {
         clickable: true,
     });
     // path.path_name = 'test path name'
+    let infoWindow = new google.maps.InfoWindow;
     google.maps.event.addListener(path, 'click', function (e) {
-        activityPopUp(e, this);
+        infoWindow.setPosition(e.latLng);
+        infoWindow.setContent("<p>" + element.activity_name + "</p>" +
+            "<p>" + element.activity_date + "</p>");
+        infoWindow.open(map);
     });
-    console.log(path);
-    console.log('#' + HSVToHex(hue, saturation, value));
     path.setMap(map);
 }
 document.addEventListener("DOMContentLoaded", () => {
