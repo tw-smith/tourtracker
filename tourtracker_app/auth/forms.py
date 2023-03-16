@@ -47,4 +47,4 @@ class PasswordResetForm(FlaskForm):
                               validators=[DataRequired(), Length(min=8)],
                               render_kw={"placeholder": "Confirm Password"})
 
-    submit = SubmitField('Sign Up')
+    submit = SubmitField('Reset Password')
