@@ -44,8 +44,8 @@ class User(db.Model):
     def check_password(self, password):
         try:
             check = ph.verify(self.password_hash, password)
-        except (argon2,exceptions.VerificationError, argon2.exceptions.HashingError):
-            raise
+        except argon2.exceptions.VerificationError:
+            raise argon2.exceptions.VerificationError
 
         if ph.check_needs_rehash(self.password_hash):
             self.password_hash = ph.hash(password)

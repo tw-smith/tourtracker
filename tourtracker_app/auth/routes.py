@@ -7,6 +7,8 @@ from tourtracker_app.auth.auth_email import send_user_validation_email, send_pas
 import json
 from werkzeug.urls import url_parse
 from flask_login import login_user, logout_user, login_required, current_user
+import argon2
+
 
 @bp.route('/login', methods=['GET','POST']) #TODO do we check if user is verified anywhere?
 def login(message=None):
@@ -16,9 +18,15 @@ def login(message=None):
     if request.method == 'POST':
         if form.validate_on_submit():
             user = db.session.execute(db.select(User).filter_by(email=form.email.data)).first()
-            if not user or not user[0].check_password(form.password.data):
+            if not user:
                 flash('Invalid username or password!')
                 return redirect(url_for('auth.login'))
+            try:
+                user[0].check_password(form.password.data)
+            except argon2.exceptions.VerificationError:
+                flash('Invalid username or password!')
+                return redirect(url_for('auth.login'))
+
             user = user[0]
             if not user.verified:
                 flash('Please verify your email address')
