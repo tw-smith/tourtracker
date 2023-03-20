@@ -98,7 +98,6 @@ function drawMap(element): void {
     const saturation = 100;
     const value = 100;
 
-    //const path = new google.maps.Polyline({
     let path = new google.maps.Polyline({
         path: element.points,
         strokeColor: '#' + HSVToHex(hue, saturation, value),
@@ -106,16 +105,40 @@ function drawMap(element): void {
         strokeWeight: 2,
         clickable: true,
     });
-   // path.path_name = 'test path name'
+
+    let border = new google.maps.Polyline({
+        path: path.getPath(),
+        strokeColor: '#ffffff',
+        strokeOpacity: 1,
+        strokeWeight: 4,
+        zIndex: -1,
+        visible: false,
+    })
+
     let infoWindow = new google.maps.InfoWindow;
     google.maps.event.addListener(path, 'click', function(e) {
         infoWindow.setPosition(e.latLng);
         infoWindow.setContent("<p>" + element.activity_name + "</p>" +
                               "<p>" + element.activity_date + "</p>")
         infoWindow.open(map)
+        showActivePolylineBorder(border)
     })
 
+    google.maps.event.addListener(infoWindow, 'closeclick', function(e) {
+        hideActivePolylineBorder(border)
+    })
+
+    border.setMap(map)
     path.setMap(map)
+    
+}
+
+function showActivePolylineBorder(borderPolyline): void {
+    borderPolyline.setVisible(true)
+}
+
+function hideActivePolylineBorder(borderPolyline): void {
+    borderPolyline.setVisible(false)
 }
 
 document.addEventListener("DOMContentLoaded", () => {

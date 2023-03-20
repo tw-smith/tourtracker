@@ -110,15 +110,33 @@ function drawMap(element) {
         strokeWeight: 2,
         clickable: true,
     });
-    // path.path_name = 'test path name'
+    let border = new google.maps.Polyline({
+        path: path.getPath(),
+        strokeColor: '#ffffff',
+        strokeOpacity: 1,
+        strokeWeight: 4,
+        zIndex: -1,
+        visible: false,
+    });
     let infoWindow = new google.maps.InfoWindow;
     google.maps.event.addListener(path, 'click', function (e) {
         infoWindow.setPosition(e.latLng);
         infoWindow.setContent("<p>" + element.activity_name + "</p>" +
             "<p>" + element.activity_date + "</p>");
         infoWindow.open(map);
+        showActivePolylineBorder(border);
     });
+    google.maps.event.addListener(infoWindow, 'closeclick', function (e) {
+        hideActivePolylineBorder(border);
+    });
+    border.setMap(map);
     path.setMap(map);
+}
+function showActivePolylineBorder(borderPolyline) {
+    borderPolyline.setVisible(true);
+}
+function hideActivePolylineBorder(borderPolyline) {
+    borderPolyline.setVisible(false);
 }
 document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("datePickerForm")) {
