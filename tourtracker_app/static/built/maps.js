@@ -9,6 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 //import 'google.maps'
 let map;
+let activeInfoWindowExists = false;
 function initMap() {
     map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 51.454, lng: -2.857 },
@@ -102,7 +103,6 @@ function drawMap(element) {
     const hue = Math.floor(Math.random() * 360);
     const saturation = 100;
     const value = 100;
-    //const path = new google.maps.Polyline({
     let path = new google.maps.Polyline({
         path: element.points,
         strokeColor: '#' + HSVToHex(hue, saturation, value),
@@ -120,9 +120,12 @@ function drawMap(element) {
     });
     let infoWindow = new google.maps.InfoWindow;
     google.maps.event.addListener(path, 'click', function (e) {
+        let activity_date = new Date(element.activity_date);
+        checkForActiveInfoWindow(infoWindow);
         infoWindow.setPosition(e.latLng);
         infoWindow.setContent("<p>" + element.activity_name + "</p>" +
-            "<p>" + element.activity_date + "</p>");
+            "<p>" + activity_date.getDate() + "/" + (activity_date.getMonth() + 1) + "/" + activity_date.getFullYear() + "</p>" +
+            `<p><a href="https://www.strava.com/activities/${element.activity_id}">View on Strava</a></p>`);
         infoWindow.open(map);
         showActivePolylineBorder(border);
     });
@@ -137,6 +140,17 @@ function showActivePolylineBorder(borderPolyline) {
 }
 function hideActivePolylineBorder(borderPolyline) {
     borderPolyline.setVisible(false);
+}
+function checkForActiveInfoWindow(newInfoWindow) {
+    let activeInfoWindow;
+    if (activeInfoWindowExists) {
+        activeInfoWindow.close();
+        activeInfoWindow = newInfoWindow;
+    }
+    else {
+        activeInfoWindow = newInfoWindow;
+        activeInfoWindowExists = true;
+    }
 }
 document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("datePickerForm")) {

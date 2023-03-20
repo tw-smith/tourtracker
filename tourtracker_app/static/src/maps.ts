@@ -1,6 +1,7 @@
 export {};
 //import 'google.maps'
 let map: google.maps.Map;
+// let activeInfoWindowExists = false;
 
 
 function initMap(): void {
@@ -117,9 +118,12 @@ function drawMap(element): void {
 
     let infoWindow = new google.maps.InfoWindow;
     google.maps.event.addListener(path, 'click', function(e) {
+        let activity_date = new Date(element.activity_date)
+        // checkForActiveInfoWindow(infoWindow)
         infoWindow.setPosition(e.latLng);
         infoWindow.setContent("<p>" + element.activity_name + "</p>" +
-                              "<p>" + element.activity_date + "</p>")
+                              "<p>" + activity_date.getDate() + "/" + (activity_date.getMonth() + 1) + "/" + activity_date.getFullYear() + "</p>" +
+                              `<p><a href="https://www.strava.com/activities/${element.activity_id}">View on Strava</a></p>`)
         infoWindow.open(map)
         showActivePolylineBorder(border)
     })
@@ -140,6 +144,17 @@ function showActivePolylineBorder(borderPolyline): void {
 function hideActivePolylineBorder(borderPolyline): void {
     borderPolyline.setVisible(false)
 }
+
+// function checkForActiveInfoWindow(newInfoWindow): void {
+//     let activeInfoWindow: google.maps.InfoWindow
+//     if (activeInfoWindowExists) {
+//         activeInfoWindow.close(); // undefined
+//         activeInfoWindow = newInfoWindow;
+//     } else {
+//         activeInfoWindow = newInfoWindow;
+//         activeInfoWindowExists = true;
+//     }
+// }
 
 document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("datePickerForm")) {
