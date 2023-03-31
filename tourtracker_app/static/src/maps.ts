@@ -21,6 +21,22 @@ declare global {
 
 window.initMap = initMap;
 
+async function refreshMapData(): Promise<void> {
+    let response = await fetch('http:/127.0.0.1:5000/get_activities_auto', {
+        method: 'POST',
+    })
+
+    if (response.ok) {
+        let result = await response.json();
+        result.forEach(element => {
+            drawMap(element)
+        });
+        const finalActivity = result[result.length - 1];
+        const finalLatLong = finalActivity.points[finalActivity.points.length - 1];
+        map.panTo(finalLatLong);
+    }
+}
+
 
 async function postDatePicker(): Promise<void> {
     const form = document.getElementById("datePickerForm") as HTMLFormElement
@@ -157,6 +173,7 @@ function hideActivePolylineBorder(borderPolyline): void {
 // }
 
 document.addEventListener("DOMContentLoaded", () => {
+    refreshMapData()
     if (document.getElementById("datePickerForm")) {
         const datePickerForm = document.getElementById("datePickerForm") as HTMLFormElement
         const startDatePicker = document.createElement("input") as HTMLInputElement

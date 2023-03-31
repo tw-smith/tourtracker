@@ -27,6 +27,7 @@ class User(db.Model):
     strava_athlete_id = db.Column(db.Integer, unique=True, index=True)
     strava_access_token = db.relationship('StravaAccessToken', backref='user', lazy='dynamic')
     strava_refresh_token = db.relationship('StravaRefreshToken', backref='user', lazy='dynamic')
+    origin_site = db.relationship('OriginSite', backref='user', lazy='dynamic')
     
 
     def __init__(self, email, password):
@@ -122,5 +123,32 @@ class User(db.Model):
     def __repr__(self):
         return '<User {}>'.format(self.email)
 
+# TODO initialisation values for this
+class OriginSite(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    site_name = db.Column(db.String(50))
+    site_url = db.Column(db.String(50), unique=True)
+    start_date = db.Column(db.Integer)
+    end_date = db.Column(db.Integer)
+    refresh_interval = db.Column(db.Integer)
+    last_refresh = db.Column(db.Integer)
+    user = db.Column(db.String(50), db.ForeignKey('user.uuid'), index=True, unique=True)
+    user_activities = db.relationship('UserActivities', backref='originsite', lazy='dynamic')
 
+    def __repr__(self):
+        return '<OriginSite {}>'.format(self.site_name)
 
+#TODO also initialise properly
+# FIXME db upgrade error ValueError: Constraint must have a name
+class UserActivities(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    strava_activity_id = db.Column(db.Integer)
+    activity_name = db.Column(db.String(100))
+    activity_date = db.Column(db.Integer)
+    summary_polyline = db.Column(db.String(100))
+    origin_site = db.Column(db.String(50), db.ForeignKey('origin_site.site_url'))
+
+    def __repr__(self):
+        return '<UserActivities {}>'.format(self.activity_name)
+
+    
