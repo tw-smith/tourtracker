@@ -1,10 +1,10 @@
-from flask import render_template, make_response, jsonify, redirect, current_app, request, url_for
+from flask import render_template, make_response, jsonify, redirect, current_app, request, url_for, flash
 from flask_login import login_required, current_user
 from tourtracker_app import db
-from tourtracker_app.models.auth_models import User, OriginSite, UserActivities
+from tourtracker_app.models.auth_models import User, Tour, TourActivities
 from tourtracker_app.models.strava_api_models import StravaAccessToken
 from tourtracker_app.main import bp
-from tourtracker_app.main.forms import StravaActivitiesForm
+from tourtracker_app.main.forms import StravaActivitiesForm, TourForm
 import polyline
 from urllib.parse import urlencode
 import requests
@@ -25,13 +25,15 @@ def index():
 @login_required
 def user_profile():
     form = StravaActivitiesForm()
+    form2 = TourForm()
+    
 
     if current_user.strava_athlete_id is not None: # TODO probably a better/more robust way to do this
         strava_authenticated = True
     else:
         strava_authenticated = False
 
-    return render_template('user_profile.html', email=current_user.email, strava_authenticated=strava_authenticated, form=form) #TODO put in logic for if we are not linked to strava
+    return render_template('user_profile.html', email=current_user.email, strava_authenticated=strava_authenticated, form=form, form2=form2) #TODO put in logic for if we are not linked to strava
 
 
 def get_strava_activities(user, start_timestamp, end_timestamp):
@@ -63,12 +65,73 @@ def get_strava_activities(user, start_timestamp, end_timestamp):
             activities.append({'activity_id': activity['id'],
                                'activity_name': activity['name'],
                                'activity_date': activity['start_date_local'],
+                               'polyline': activity['map']['summary_polyline'],
                                'points': latlong})
         params['page'] += 1
         print("page number" + str(params['page']))
     return activities
     
+@bp.route('/createsitelink', methods=['POST'])
+def create_site_link():
+    form = TourForm()
+    print(form.site_url.data)
+    if form.validate_on_submit():
+        tour_name = form.tour_name.data
+        site_url = form.site_url.data
 
+        date_format = "%Y-%m-%d"
+        epoch = datetime(1970,1,1)
+        start_timestamp = (datetime.strptime(form.start_date.data, date_format) - epoch).total_seconds()
+        end_timestamp = (datetime.strptime(form.end_date.data, date_format) - epoch).total_seconds()
+
+
+
+
+        if form.auto_refresh.data is True:
+            refresh_interval = 21600
+            last_refresh = None
+        else:
+            refresh_interval = None
+            last_refresh = None
+
+        tour = Tour(
+            tour_name=tour_name,
+            site_url=site_url,
+            start_date=start_timestamp,
+            end_date=end_timestamp,
+            refresh_interval=refresh_interval,
+            last_refresh=last_refresh,
+            user_id=current_user.uuid
+        )
+        db.session.add(tour)
+        db.session.commit()
+
+        activities = get_strava_activities(current_user, start_timestamp, end_timestamp)
+        for activity in activities:
+            new_activity = TourActivities(
+                strava_activity_id=activity['activity_id'],
+                activity_name=activity['activity_name'],
+                activity_date=activity['activity_date'],
+                summary_polyline=activity['polyline'],
+                origin_site=site_url
+            )
+            db.session.add(new_activity)
+        db.session.commit()
+
+
+
+
+
+
+
+
+
+
+
+        return render_template('linksite.html', site_name=site_name)
+    flash('Site linking error!')
+    print(form.errors)
+    return redirect(url_for('main.user_profile'))
 
 
 @bp.route('/get_activities_auto', methods=['POST'])
@@ -78,7 +141,7 @@ def get_activities_auto():
     # if content_type != 'application/json;charset=utf-8':
     #     return 'Content Type not supported!'
     request_origin = request.headers.get('Origin')
-    site = db.session.execute(db.select(OriginSite).filter_by(site_url=request_origin)).first()
+    site = db.session.execute(db.select(Tour).filter_by(site_url=request_origin)).first()
     if site:
         if (site.last_refresh + site.refresh_interval) < current_timestamp:
             activities = get_strava_activities(site.user, site.start_date, current_timestamp)

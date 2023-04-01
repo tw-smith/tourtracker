@@ -12,8 +12,21 @@
   <p>User email: {{ email }}</p>
 
   {% if strava_authenticated %}
-    <form id="datePickerForm">
+    <form method="POST" action="/createsitelink">
+      {{ form2.csrf_token }}
+      {{ form2.tour_name }}
+      {{ form2.site_url }}
+      {{ form2.start_date }}
+      {{ form2.auto_refresh }}
+      {{ form2.end_date }}
+      {{ form2.submit }}
     </form>
+
+
+
+
+    <!-- <form id="datePickerForm">
+    </form> -->
 
     <form>
       <button type="submit" formaction={{ url_for('auth.logout') }}>Log Out</button>
