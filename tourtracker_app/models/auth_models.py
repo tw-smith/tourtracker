@@ -27,7 +27,7 @@ class User(db.Model):
     strava_athlete_id = db.Column(db.Integer, unique=True, index=True)
     strava_access_token = db.relationship('StravaAccessToken', backref='user', lazy='dynamic')
     strava_refresh_token = db.relationship('StravaRefreshToken', backref='user', lazy='dynamic')
-    origin_site = db.relationship('Tour', backref='user', lazy='dynamic')
+    tours = db.relationship('Tour', backref='user', lazy='dynamic')
     activities = db.relationship('TourActivities', backref='user', lazy='dynamic')
     
 
@@ -124,9 +124,10 @@ class User(db.Model):
     def __repr__(self):
         return '<User {}>'.format(self.email)
 
-# TODO initialisation values for this
+
 class Tour(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    tour_uuid = db.Column(db.String(50), unique=True)
     tour_name = db.Column(db.String(50))
     site_url = db.Column(db.String(50), unique=True)
     start_date = db.Column(db.Integer)
@@ -136,11 +137,20 @@ class Tour(db.Model):
     user_id = db.Column(db.String(50), db.ForeignKey('user.uuid'), index=True, unique=True)
     tour_activities = db.relationship('TourActivities', backref='tour', lazy='dynamic')
 
+    def __init__(self, tour_name, site_url, start_date, end_date, refresh_interval, last_refresh):
+        self.uuid = str(uuid.uuid4())
+        self.tour_name = tour_name
+        self.site_url = site_url
+        self.start_date = start_date
+        self.end_date = end_date
+        self.refresh_interval = refresh_interval
+        self.last_refresh = last_refresh
+
     def __repr__(self):
         return '<Tour {}>'.format(self.site_name)
 
 #TODO also initialise properly
-# FIXME db upgrade error ValueError: Constraint must have a name
+
 class TourActivities(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     strava_activity_id = db.Column(db.Integer)

@@ -12,7 +12,7 @@
   <p>User email: {{ email }}</p>
 
   {% if strava_authenticated %}
-    <form method="POST" action="/createsitelink">
+    <form method="POST" action="/createtour">
       {{ form2.csrf_token }}
       {{ form2.tour_name }}
       {{ form2.site_url }}

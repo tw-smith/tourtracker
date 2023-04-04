@@ -71,8 +71,8 @@ def get_strava_activities(user, start_timestamp, end_timestamp):
         print("page number" + str(params['page']))
     return activities
     
-@bp.route('/createsitelink', methods=['POST'])
-def create_site_link():
+@bp.route('/createtour', methods=['POST'])
+def create_tour():
     form = TourForm()
     print(form.site_url.data)
     if form.validate_on_submit():
@@ -81,15 +81,18 @@ def create_site_link():
 
         date_format = "%Y-%m-%d"
         epoch = datetime(1970,1,1)
+
+        # FIXME
+        #  File "/Users/durness/Documents/Coding/tourtracker/tourtracker_app/main/routes.py", line 84, in create_tour
+        #start_timestamp = (datetime.strptime(form.start_date.data, date_format) - epoch).total_seconds()
+        #TypeError: strptime() argument 1 must be str, not datetime.date
+        
         start_timestamp = (datetime.strptime(form.start_date.data, date_format) - epoch).total_seconds()
         end_timestamp = (datetime.strptime(form.end_date.data, date_format) - epoch).total_seconds()
 
-
-
-
         if form.auto_refresh.data is True:
             refresh_interval = 21600
-            last_refresh = None
+            last_refresh = int(round(datetime.now().timestamp()))
         else:
             refresh_interval = None
             last_refresh = None
@@ -119,22 +122,32 @@ def create_site_link():
         db.session.commit()
 
 
+        return render_template('tourdetail.html', tour_name=tour_name, activity_count=len(activities))
+        # TODO return a url of the form /tour/uuid or tour?uuid=uuid here. Then pull that uuid from the URL into the TS script to make the GET
+        # request necessary to draw the map
 
+        # TODO make sure only the owner can view this page. But does this then impact our ability to respond to the TS GET request from anyone?
+        # if we make a route /tour/data/<uuid> return only a json and /tour/uuid return the rendered tour admin page then we should be good
 
-
-
-
-
-
-
-
-        return render_template('linksite.html', site_name=site_name)
     flash('Site linking error!')
     print(form.errors)
     return redirect(url_for('main.user_profile'))
 
 
-@bp.route('/get_activities_auto', methods=['POST'])
+@bp.route('/tour/data/<uuid>', methods=['GET'])
+def get_tour_activities(uuid):
+    tour = db.session.execute(db.select(Tour).filter_by(uuid=uuid)).first()
+    tour_activities = tour.tour_activities
+    return make_response(tour_activities, 200)
+
+
+
+
+
+
+
+
+@bp.route('/get_activities_auto', methods=['GET'])
 def get_activities_auto():
     current_timestamp = int(round(datetime.now().timestamp()))
     # content_type = request.headers.get('Content-Type')
@@ -146,7 +159,7 @@ def get_activities_auto():
         if (site.last_refresh + site.refresh_interval) < current_timestamp:
             activities = get_strava_activities(site.user, site.start_date, current_timestamp)
             return make_response(activities, 200)
-        activities = db.session.execute(db.Select(UserActivities).filter_by(origin_site=request_origin)).all()
+        activities = db.session.execute(db.Select(TourActivities).filter_by(origin_site=request_origin)).all()
         return make_response(activities, 200)
 
 
