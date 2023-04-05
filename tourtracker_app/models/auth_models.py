@@ -134,20 +134,21 @@ class Tour(db.Model):
     end_date = db.Column(db.Integer)
     refresh_interval = db.Column(db.Integer)
     last_refresh = db.Column(db.Integer)
-    user_id = db.Column(db.String(50), db.ForeignKey('user.uuid'), index=True, unique=True)
+    user_id = db.Column(db.String(50), db.ForeignKey('user.uuid'), index=True)
     tour_activities = db.relationship('TourActivities', backref='tour', lazy='dynamic')
 
-    def __init__(self, tour_name, site_url, start_date, end_date, refresh_interval, last_refresh):
-        self.uuid = str(uuid.uuid4())
+    def __init__(self, tour_name, site_url, start_date, end_date, refresh_interval, last_refresh, user_id):
+        self.tour_uuid = str(uuid.uuid4())
         self.tour_name = tour_name
         self.site_url = site_url
         self.start_date = start_date
         self.end_date = end_date
         self.refresh_interval = refresh_interval
         self.last_refresh = last_refresh
+        self.user_id = user_id
 
     def __repr__(self):
-        return '<Tour {}>'.format(self.site_name)
+        return '<Tour {}>'.format(self.tour_name)
 
 #TODO also initialise properly
 

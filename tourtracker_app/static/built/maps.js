@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 //import 'google.maps'
 let map;
-let activeInfoWindowExists = false;
+// let activeInfoWindowExists = false;
 function initMap() {
     map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 51.454, lng: -2.857 },
@@ -18,6 +18,22 @@ function initMap() {
     });
 }
 window.initMap = initMap;
+function refreshMapData() {
+    return __awaiter(this, void 0, void 0, function* () {
+        let response = yield fetch('http:/127.0.0.1:5000/get_activities_auto', {
+            method: 'POST',
+        });
+        if (response.ok) {
+            let result = yield response.json();
+            result.forEach(element => {
+                drawMap(element);
+            });
+            const finalActivity = result[result.length - 1];
+            const finalLatLong = finalActivity.points[finalActivity.points.length - 1];
+            map.panTo(finalLatLong);
+        }
+    });
+}
 function postDatePicker() {
     return __awaiter(this, void 0, void 0, function* () {
         const form = document.getElementById("datePickerForm");
@@ -121,7 +137,7 @@ function drawMap(element) {
     let infoWindow = new google.maps.InfoWindow;
     google.maps.event.addListener(path, 'click', function (e) {
         let activity_date = new Date(element.activity_date);
-        checkForActiveInfoWindow(infoWindow);
+        // checkForActiveInfoWindow(infoWindow)
         infoWindow.setPosition(e.latLng);
         infoWindow.setContent("<p>" + element.activity_name + "</p>" +
             "<p>" + activity_date.getDate() + "/" + (activity_date.getMonth() + 1) + "/" + activity_date.getFullYear() + "</p>" +
@@ -141,18 +157,18 @@ function showActivePolylineBorder(borderPolyline) {
 function hideActivePolylineBorder(borderPolyline) {
     borderPolyline.setVisible(false);
 }
-function checkForActiveInfoWindow(newInfoWindow) {
-    let activeInfoWindow;
-    if (activeInfoWindowExists) {
-        activeInfoWindow.close();
-        activeInfoWindow = newInfoWindow;
-    }
-    else {
-        activeInfoWindow = newInfoWindow;
-        activeInfoWindowExists = true;
-    }
-}
+// function checkForActiveInfoWindow(newInfoWindow): void {
+//     let activeInfoWindow: google.maps.InfoWindow
+//     if (activeInfoWindowExists) {
+//         activeInfoWindow.close(); // undefined
+//         activeInfoWindow = newInfoWindow;
+//     } else {
+//         activeInfoWindow = newInfoWindow;
+//         activeInfoWindowExists = true;
+//     }
+// }
 document.addEventListener("DOMContentLoaded", () => {
+    refreshMapData();
     if (document.getElementById("datePickerForm")) {
         const datePickerForm = document.getElementById("datePickerForm");
         const startDatePicker = document.createElement("input");

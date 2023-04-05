@@ -70,7 +70,26 @@ def get_strava_activities(user, start_timestamp, end_timestamp):
         params['page'] += 1
         print("page number" + str(params['page']))
     return activities
-    
+
+
+@bp.route('/tour/<uuid>', methods=['GET'])
+def tour_detail(uuid):
+    tour = db.session.execute(db.select(Tour).filter_by(tour_uuid=uuid)).first()
+    return render_template('tourdetail.html', tour_name=tour[0].tour_name)
+
+
+@bp.route('/tour/data/<uuid>', methods=['GET'])
+def get_tour_activities(uuid):
+    tour = db.session.execute(db.select(Tour).filter_by(tour_uuid=uuid)).first()
+    tour_activities = tour[0].tour_activities
+    print(tour_activities)
+    # FIXME TypeError: The view function did not return a valid response. The return type must be a 
+    # string, dict, list, tuple with headers or status, Response instance, or WSGI callable, but it was a AppenderQuery.
+    # could be related to the fact that the backrefs/FKs etc on TourActivities don't look right
+    return make_response(tour_activities, 200)
+
+
+
 @bp.route('/createtour', methods=['POST'])
 def create_tour():
     form = TourForm()
@@ -80,15 +99,10 @@ def create_tour():
         site_url = form.site_url.data
 
         date_format = "%Y-%m-%d"
-        epoch = datetime(1970,1,1)
+        epoch = datetime(1970, 1, 1)
 
-        # FIXME
-        #  File "/Users/durness/Documents/Coding/tourtracker/tourtracker_app/main/routes.py", line 84, in create_tour
-        #start_timestamp = (datetime.strptime(form.start_date.data, date_format) - epoch).total_seconds()
-        #TypeError: strptime() argument 1 must be str, not datetime.date
-        
-        start_timestamp = (datetime.strptime(form.start_date.data, date_format) - epoch).total_seconds()
-        end_timestamp = (datetime.strptime(form.end_date.data, date_format) - epoch).total_seconds()
+        start_timestamp = (datetime(form.start_date.data.year, form.start_date.data.month, form.start_date.data.day)).timestamp()
+        end_timestamp = (datetime(form.end_date.data.year, form.end_date.data.month, form.end_date.data.day)).timestamp()
 
         if form.auto_refresh.data is True:
             refresh_interval = 21600
@@ -120,9 +134,10 @@ def create_tour():
             )
             db.session.add(new_activity)
         db.session.commit()
+        return redirect(url_for('main.tour_detail', uuid=tour.tour_uuid))
 
 
-        return render_template('tourdetail.html', tour_name=tour_name, activity_count=len(activities))
+        
         # TODO return a url of the form /tour/uuid or tour?uuid=uuid here. Then pull that uuid from the URL into the TS script to make the GET
         # request necessary to draw the map
 
@@ -134,11 +149,7 @@ def create_tour():
     return redirect(url_for('main.user_profile'))
 
 
-@bp.route('/tour/data/<uuid>', methods=['GET'])
-def get_tour_activities(uuid):
-    tour = db.session.execute(db.select(Tour).filter_by(uuid=uuid)).first()
-    tour_activities = tour.tour_activities
-    return make_response(tour_activities, 200)
+
 
 
 
