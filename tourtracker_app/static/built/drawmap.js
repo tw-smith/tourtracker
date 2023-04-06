@@ -19,7 +19,11 @@ function initMap() {
 window.initMap = initMap;
 function refreshMapData() {
     return __awaiter(this, void 0, void 0, function* () {
-        let response = yield fetch('http://127.0.0.1:5000/tour/data/7977b64b-b525-455b-8ece-7091c4130ab0', {
+        const fetch_url_origin = window.location.origin;
+        const fetch_url_pathname_components = window.location.pathname.split('/');
+        const fetch_url_pathname = fetch_url_pathname_components[fetch_url_pathname_components.length - 1];
+        const fetch_url = fetch_url_origin + fetch_url_pathname;
+        let response = yield fetch(fetch_url, {
             method: 'GET',
         });
         if (response.ok) {
