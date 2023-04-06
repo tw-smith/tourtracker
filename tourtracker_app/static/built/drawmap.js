@@ -14,11 +14,12 @@ function initMap() {
         zoom: 8,
         mapTypeId: 'terrain',
     });
+    refreshMapData();
 }
 window.initMap = initMap;
 function refreshMapData() {
     return __awaiter(this, void 0, void 0, function* () {
-        let response = yield fetch('http://127.0.0.1:5000/tour/data/', {
+        let response = yield fetch('http://127.0.0.1:5000/tour/data/7977b64b-b525-455b-8ece-7091c4130ab0', {
             method: 'GET',
         });
         if (response.ok) {
@@ -128,7 +129,4 @@ function HSVToHex(h, s, v) {
     });
     return hex.join('');
 }
-document.addEventListener("DOMContentLoaded", () => {
-    refreshMapData();
-});
 export {};

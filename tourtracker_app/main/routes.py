@@ -80,14 +80,22 @@ def tour_detail(uuid):
 
 @bp.route('/tour/data/<uuid>', methods=['GET'])
 def get_tour_activities(uuid):
-    tour = db.session.execute(db.select(Tour).filter_by(tour_uuid=uuid)).first()
-    tour_activities = tour[0].tour_activities
-    print(tour_activities)
-    # FIXME TypeError: The view function did not return a valid response. The return type must be a 
-    # string, dict, list, tuple with headers or status, Response instance, or WSGI callable, but it was a AppenderQuery.
-    # could be related to the fact that the backrefs/FKs etc on TourActivities don't look right
-    return make_response(tour_activities, 200)
+    tour_activities_result = db.session.execute(db.select(TourActivities.strava_activity_id, 
+                                                          TourActivities.activity_name,
+                                                          TourActivities.activity_date,
+                                                          TourActivities.summary_polyline).filter_by(parent_tour=uuid).order_by(TourActivities.activity_date.asc())).all()
 
+    tour_activities = []
+    for row in tour_activities_result:
+        row_dict = row._asdict()
+        points = polyline.decode(row_dict['summary_polyline'])
+        latlong = []
+        for point in points:
+            latlong.append({'lat': point[0], 'lng': point[1]})
+        row_dict['points'] = latlong
+        row_dict.pop('summary_polyline')
+        tour_activities.append(row_dict)
+    return make_response(tour_activities, 200)
 
 
 @bp.route('/createtour', methods=['POST'])
@@ -130,7 +138,8 @@ def create_tour():
                 activity_name=activity['activity_name'],
                 activity_date=activity['activity_date'],
                 summary_polyline=activity['polyline'],
-                origin_site=site_url
+                parent_tour=tour.tour_uuid,
+                user_id=current_user.uuid
             )
             db.session.add(new_activity)
         db.session.commit()
@@ -158,20 +167,20 @@ def create_tour():
 
 
 
-@bp.route('/get_activities_auto', methods=['GET'])
-def get_activities_auto():
-    current_timestamp = int(round(datetime.now().timestamp()))
-    # content_type = request.headers.get('Content-Type')
-    # if content_type != 'application/json;charset=utf-8':
-    #     return 'Content Type not supported!'
-    request_origin = request.headers.get('Origin')
-    site = db.session.execute(db.select(Tour).filter_by(site_url=request_origin)).first()
-    if site:
-        if (site.last_refresh + site.refresh_interval) < current_timestamp:
-            activities = get_strava_activities(site.user, site.start_date, current_timestamp)
-            return make_response(activities, 200)
-        activities = db.session.execute(db.Select(TourActivities).filter_by(origin_site=request_origin)).all()
-        return make_response(activities, 200)
+# @bp.route('/get_activities_auto', methods=['GET'])
+# def get_activities_auto():
+#     current_timestamp = int(round(datetime.now().timestamp()))
+#     # content_type = request.headers.get('Content-Type')
+#     # if content_type != 'application/json;charset=utf-8':
+#     #     return 'Content Type not supported!'
+#     request_origin = request.headers.get('Origin')
+#     site = db.session.execute(db.select(Tour).filter_by(site_url=request_origin)).first()
+#     if site:
+#         if (site.last_refresh + site.refresh_interval) < current_timestamp:
+#             activities = get_strava_activities(site.user, site.start_date, current_timestamp)
+#             return make_response(activities, 200)
+#         activities = db.session.execute(db.Select(TourActivities).filter_by(origin_site=request_origin)).all()
+#         return make_response(activities, 200)
 
 
 @bp.route('/get_activities', methods=['POST'])

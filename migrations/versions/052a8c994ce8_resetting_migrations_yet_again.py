@@ -1,8 +1,8 @@
-"""reset migrations after tour uuid additin
+"""resetting migrations yet again
 
-Revision ID: 12373337d7a4
+Revision ID: 052a8c994ce8
 Revises: 
-Create Date: 2023-04-03 21:48:27.788762
+Create Date: 2023-04-05 08:35:16.487003
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '12373337d7a4'
+revision = '052a8c994ce8'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -72,7 +72,7 @@ def upgrade():
     sa.UniqueConstraint('tour_uuid')
     )
     with op.batch_alter_table('tour', schema=None) as batch_op:
-        batch_op.create_index(batch_op.f('ix_tour_user_id'), ['user_id'], unique=True)
+        batch_op.create_index(batch_op.f('ix_tour_user_id'), ['user_id'], unique=False)
 
     op.create_table('tour_activities',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -80,9 +80,9 @@ def upgrade():
     sa.Column('activity_name', sa.String(length=100), nullable=True),
     sa.Column('activity_date', sa.Integer(), nullable=True),
     sa.Column('summary_polyline', sa.String(length=100), nullable=True),
-    sa.Column('origin_site', sa.String(length=50), nullable=True),
+    sa.Column('parent_tour', sa.String(length=50), nullable=True),
     sa.Column('user_id', sa.String(length=50), nullable=True),
-    sa.ForeignKeyConstraint(['origin_site'], ['tour.site_url'], ),
+    sa.ForeignKeyConstraint(['parent_tour'], ['tour.tour_uuid'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.uuid'], ),
     sa.PrimaryKeyConstraint('id')
     )

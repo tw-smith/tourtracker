@@ -7,6 +7,9 @@ function initMap(): void {
         zoom: 8,
         mapTypeId: 'terrain',
     })
+
+    refreshMapData()
+
 }
 
 declare global {
@@ -18,7 +21,17 @@ declare global {
 window.initMap = initMap;
 
 async function refreshMapData(): Promise<void> {
-    let response = await fetch ('http://127.0.0.1:5000/tour/data/', {
+    let fetch_url_origin = window.location.origin;
+    const regex = /[^/]*$/g;
+    // TODO sort this regex stuff out
+    let fetch_url_pathname = window.location.pathname;
+
+
+
+
+
+
+    let response = await fetch ('http://127.0.0.1:5000/tour/data/7977b64b-b525-455b-8ece-7091c4130ab0', {
         method: 'GET',
     })
 
@@ -126,6 +139,3 @@ function HSVToHex(h: number,s: number,v: number): string {
     return hex.join('')   
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    refreshMapData()
-})

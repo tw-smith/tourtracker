@@ -6,6 +6,7 @@ import jwt
 from datetime import datetime, timedelta
 import uuid
 from tourtracker_app.models.strava_api_models import StravaAccessToken
+from dataclasses import dataclass
 
 ph = PasswordHasher()
 
@@ -152,14 +153,18 @@ class Tour(db.Model):
 
 #TODO also initialise properly
 
+@dataclass
 class TourActivities(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     strava_activity_id = db.Column(db.Integer)
     activity_name = db.Column(db.String(100))
     activity_date = db.Column(db.Integer)
     summary_polyline = db.Column(db.String(100))
-    origin_site = db.Column(db.String(50), db.ForeignKey('tour.site_url'))
+    parent_tour = db.Column(db.String(50), db.ForeignKey('tour.tour_uuid'))
     user_id = db.Column(db.String(50), db.ForeignKey('user.uuid'), index=True)
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
     def __repr__(self):
         return '<TourActivities {}>'.format(self.activity_name)
