@@ -22,7 +22,7 @@ function refreshMapData() {
         const fetch_url_origin = window.location.origin;
         const fetch_url_pathname_components = window.location.pathname.split('/');
         const fetch_url_pathname = fetch_url_pathname_components[fetch_url_pathname_components.length - 1];
-        const fetch_url = fetch_url_origin + fetch_url_pathname;
+        const fetch_url = fetch_url_origin + '/tour/data/' + fetch_url_pathname;
         let response = yield fetch(fetch_url, {
             method: 'GET',
         });
