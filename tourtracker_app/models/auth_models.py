@@ -136,7 +136,7 @@ class Tour(db.Model):
     refresh_interval = db.Column(db.Integer)
     last_refresh = db.Column(db.Integer)
     user_id = db.Column(db.String(50), db.ForeignKey('user.uuid'), index=True)
-    tour_activities = db.relationship('TourActivities', backref='tour', lazy='dynamic')
+    tour_activities = db.relationship('TourActivities', backref='tour', lazy='dynamic', cascade='all, delete')
 
     def __init__(self, tour_name, site_url, start_date, end_date, refresh_interval, last_refresh, user_id):
         self.tour_uuid = str(uuid.uuid4())
