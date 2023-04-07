@@ -63,7 +63,7 @@ function drawMap(element) {
         infoWindow.setPosition(e.latLng);
         infoWindow.setContent("<p>" + element.activity_name + "</p>" +
             "<p>" + activity_date.getDate() + "/" + (activity_date.getMonth() + 1) + "/" + activity_date.getFullYear() + "</p>" +
-            `<p><a href="https://www.strava.com/activities/${element.activity_id}">View on Strava</a></p>`);
+            `<p><a href="https://www.strava.com/activities/${element.strava_activity_id}">View on Strava</a></p>`);
         infoWindow.open(map);
         showActivePolylineBorder(border);
     });

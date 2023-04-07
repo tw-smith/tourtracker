@@ -73,10 +73,8 @@ def get_tour_activities(uuid):
 @login_required
 def create_tour():
     form = TourForm()
-    print(form.site_url.data)
     if form.validate_on_submit():
         tour_name = form.tour_name.data
-        site_url = form.site_url.data
 
         date_format = "%Y-%m-%d"
         epoch = datetime(1970, 1, 1)
@@ -93,7 +91,6 @@ def create_tour():
 
         tour = Tour(
             tour_name=tour_name,
-            site_url=site_url,
             start_date=start_timestamp,
             end_date=end_timestamp,
             refresh_interval=refresh_interval,
@@ -128,6 +125,42 @@ def create_tour():
     flash('Site linking error!')
     print(form.errors)
     return redirect(url_for('main.user_profile'))
+
+
+@bp.route('/tour/refresh/<uuid>', methods=['GET'])
+@login_required
+def refresh_tour(uuid):
+    tour = db.session.execute(db.select(Tour).filter_by(tour_uuid=uuid)).first()
+    activities = get_strava_activities(current_user, tour[0].start_date, tour[0].end_date)
+    for activity in activities:
+        db.session.merge(TourActivities(
+            strava_activity_id=activity['activity_id'],
+            activity_name=activity['activity_name'],
+            activity_date=activity['activity_date'],
+            summary_polyline=activity['polyline'],
+            parent_tour=tour[0].tour_uuid,
+            user_id=current_user.uuid
+        ))
+    db.session.commit()
+    # tour = db.session.execute(db.select(Tour).filter_by(tour_uuid=uuid)).first()
+    # tour = tour[0]
+    # db.session.delete(tour.tour_activities)
+    # db.session.commit()
+    # activities = get_strava_activities(current_user, tour.start_date, tour.end_date)
+    # for activity in activities:
+    #     new_activity = TourActivities(
+    #         strava_activity_id=activity['activity_id'],
+    #         activity_name=activity['activity_name'],
+    #         activity_date=activity['activity_date'],
+    #         summary_polyline=activity['polyline'],
+    #         parent_tour=tour.tour_uuid,
+    #         user_id=current_user.uuid
+    #     )
+    #     db.session.add(new_activity)
+    # db.session.commit()
+    return redirect(url_for('main.user_profile'))
+
+
 
 
 @bp.route('/deletetour/<uuid>', methods=['GET'])
