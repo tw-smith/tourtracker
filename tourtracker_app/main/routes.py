@@ -142,23 +142,7 @@ def refresh_tour(uuid):
             user_id=current_user.uuid
         ))
     db.session.commit()
-    # tour = db.session.execute(db.select(Tour).filter_by(tour_uuid=uuid)).first()
-    # tour = tour[0]
-    # db.session.delete(tour.tour_activities)
-    # db.session.commit()
-    # activities = get_strava_activities(current_user, tour.start_date, tour.end_date)
-    # for activity in activities:
-    #     new_activity = TourActivities(
-    #         strava_activity_id=activity['activity_id'],
-    #         activity_name=activity['activity_name'],
-    #         activity_date=activity['activity_date'],
-    #         summary_polyline=activity['polyline'],
-    #         parent_tour=tour.tour_uuid,
-    #         user_id=current_user.uuid
-    #     )
-    #     db.session.add(new_activity)
-    # db.session.commit()
-    return redirect(url_for('main.user_profile'))
+    return redirect(url_for('main.tour_detail', uuid=tour.tour_uuid))
 
 
 
