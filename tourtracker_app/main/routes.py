@@ -1,12 +1,11 @@
-from flask import render_template, make_response, jsonify, redirect, current_app, request, url_for, flash
+from flask import render_template, make_response, redirect, url_for, flash
 from flask_login import login_required, current_user
 from tourtracker_app import db
-from tourtracker_app.models.auth_models import User, Tour, TourActivities
+from tourtracker_app.models.auth_models import Tour, TourActivities
 from tourtracker_app.models.strava_api_models import StravaAccessToken, StravaRefreshToken
 from tourtracker_app.main import bp
 from tourtracker_app.main.forms import TourForm
 import polyline
-import requests
 from requests import HTTPError
 from datetime import datetime
 import time
@@ -171,7 +170,6 @@ def delete_tour(uuid):
 @bp.errorhandler(HTTPError)
 def handle_http_error(e):
     print(e)
-    db.session.de
     access_token = db.session.execute(db.select(StravaAccessToken).filter_by(athlete_id=current_user.strava_athlete_id)).first()
     refresh_token = db.session.execute(db.select(StravaRefreshToken).filter_by(athlete_id=current_user.strava_athlete_ud)).first()
     db.session.delete(access_token[0])

@@ -1,12 +1,11 @@
-from flask import render_template, request, Response, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash
 from tourtracker_app import db
 from tourtracker_app.auth import bp
 from tourtracker_app.auth.forms  import LoginForm, SignupForm, PasswordResetRequestForm, PasswordResetForm
 from tourtracker_app.models.auth_models import User
 from tourtracker_app.auth.auth_email import send_user_validation_email, send_password_reset_email
-import json
 from werkzeug.urls import url_parse
-from flask_login import login_user, logout_user, login_required, current_user
+from flask_login import login_user, logout_user, current_user
 import argon2
 
 
