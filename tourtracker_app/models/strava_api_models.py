@@ -2,6 +2,7 @@ from flask import current_app
 from tourtracker_app import db
 import time
 import requests
+from tourtracker_app.strava_api_auth.strava_api_utilities import handle_strava_api_response
 
 
 class StravaAccessToken(db.Model):
@@ -20,8 +21,7 @@ class StravaAccessToken(db.Model):
         client_id = current_app.config['STRAVA_CLIENT_ID']
         client_secret = current_app.config['STRAVA_CLIENT_SECRET']
         post_data = {'client_id': client_id, 'client_secret': client_secret, 'refresh_token': refresh_token.refresh_token, 'grant_type': 'refresh_token'}
-        response = requests.post('https://www.strava.com/api/v3/oauth/token', json=post_data)
-        response = response.json()
+        response = handle_strava_api_response(requests.post('https://www.strava.com/api/v3/oauth/token', json=post_data))
         self.access_token = response['access_token']
         self.expires_at = response['expires_at']
         refresh_token.refresh_token = response['refresh_token']
