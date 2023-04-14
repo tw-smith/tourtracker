@@ -32,11 +32,15 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
 
+    from tourtracker_app.models.tour_models import Tour, TourActivities
+    #from tourtracker_app.strava_api_auth.error_handlers import StravaBadRequestException
     from tourtracker_app.strava_api_auth.strava_api_utilities import handle_strava_api_response
+    
 
-    from tourtracker_app.models.strava_api_models import StravaAccessToken, StravaRefreshToken
+    
     from tourtracker_app.models.auth_models import User
-  
+    #from tourtracker_app.models.strava_api_models import StravaAccessToken, StravaRefreshToken
+    
 
     # AUTH
     login.init_app(app)

@@ -1,19 +1,24 @@
 import requests
-from requests import HTTPError
+#from tourtracker_app.strava_api_auth.error_handlers import StravaBadRequestException
+
 from urllib.parse import urlencode
 import polyline
 
 
 def handle_strava_api_response(response):
-    if response.ok:
-        return response.json()
-    else:
-        if response.status_code == 400:
-            raise HTTPError('Strava Auth Error')
+    from tourtracker_app.strava_api_auth.error_handlers import StravaBadRequestException
+    print(response)
+    if response:
+        response_json = response.json()
+        if response.ok:
+            return response_json
+        else:
+            if response.status_code == 400 or response.status_code == 401:
+                raise StravaBadRequestException(response_json['message'])
+            if response.status_code == 429:
+                raise StravaBadRequestException(response_json['message'])
         
-
-
-
+        
 def get_strava_activities(user, start_timestamp, end_timestamp):
     base_url = 'https://www.strava.com/api/v3/athlete/activities'
         # Get access token
@@ -43,4 +48,5 @@ def get_strava_activities(user, start_timestamp, end_timestamp):
                                     'points': latlong})
             params['page'] += 1
             print("page number" + str(params['page']))
+        
         return activities

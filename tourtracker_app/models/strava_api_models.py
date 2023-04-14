@@ -1,8 +1,9 @@
-from flask import current_app
+
 from tourtracker_app import db
 import time
 import requests
 from tourtracker_app.strava_api_auth.strava_api_utilities import handle_strava_api_response
+from flask import current_app
 
 
 class StravaAccessToken(db.Model):
