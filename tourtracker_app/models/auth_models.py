@@ -5,7 +5,6 @@ import argon2
 import jwt
 from datetime import datetime, timedelta
 import uuid
-from tourtracker_app.models.strava_api_models import StravaAccessToken
 from dataclasses import dataclass
 
 ph = PasswordHasher()
