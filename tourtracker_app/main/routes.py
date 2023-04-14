@@ -1,14 +1,13 @@
 from flask import render_template, make_response, redirect, url_for, flash
 from flask_login import login_required, current_user
 from tourtracker_app import db
-from tourtracker_app.models.auth_models import Tour, TourActivities
+from tourtracker_app.models.tour_models import Tour, TourActivities
 from tourtracker_app.models.strava_api_models import StravaAccessToken, StravaRefreshToken
 from tourtracker_app.main import bp
 from tourtracker_app.main.forms import TourForm
 import polyline
 from requests import HTTPError
 from datetime import datetime
-import time
 from tourtracker_app.strava_api_auth.strava_api_utilities import get_strava_activities
 
 

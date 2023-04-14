@@ -1,0 +1,46 @@
+from tourtracker_app import db
+import uuid
+from dataclasses import dataclass
+
+
+class Tour(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    tour_uuid = db.Column(db.String(50), unique=True)
+    tour_name = db.Column(db.String(50))
+    start_date = db.Column(db.Integer)
+    end_date = db.Column(db.Integer)
+    refresh_interval = db.Column(db.Integer)
+    last_refresh = db.Column(db.Integer)
+    user_id = db.Column(db.String(50), db.ForeignKey('user.uuid'), index=True)
+    tour_activities = db.relationship('TourActivities', backref='tour', lazy='dynamic', cascade='all, delete')
+
+    def __init__(self, tour_name, start_date, end_date, refresh_interval, last_refresh, user_id):
+        self.tour_uuid = str(uuid.uuid4())
+        self.tour_name = tour_name
+        self.start_date = start_date
+        self.end_date = end_date
+        self.refresh_interval = refresh_interval
+        self.last_refresh = last_refresh
+        self.user_id = user_id
+
+    def __repr__(self):
+        return '<Tour {}>'.format(self.tour_name)
+
+#TODO also initialise properly
+
+@dataclass
+class TourActivities(db.Model):
+    #id = db.Column(db.Integer, primary_key=True)
+    # https://stackoverflow.com/questions/12297156/fastest-way-to-insert-object-if-it-doesnt-exist-with-sqlalchemy
+    strava_activity_id = db.Column(db.Integer, primary_key=True)
+    activity_name = db.Column(db.String(100))
+    activity_date = db.Column(db.Integer)
+    summary_polyline = db.Column(db.String(100))
+    parent_tour = db.Column(db.String(50), db.ForeignKey('tour.tour_uuid'), primary_key=True)
+    user_id = db.Column(db.String(50), db.ForeignKey('user.uuid'), index=True)
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+    def __repr__(self):
+        return '<TourActivities {}>'.format(self.activity_name)
