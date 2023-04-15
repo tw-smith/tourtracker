@@ -18,7 +18,7 @@ def handle_strava_api_response(response):
             if response.status_code == 429:
                 raise StravaBadRequestException(response_json['message'])
         
-        
+
 def get_strava_activities(user, start_timestamp, end_timestamp):
     base_url = 'https://www.strava.com/api/v3/athlete/activities'
         # Get access token
