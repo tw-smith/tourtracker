@@ -20,6 +20,7 @@ class Config(object):
     MAIL_PASSWORD = os.environ.get('SENDGRID_API_KEY')
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
     STRAVA_WEBHOOK_VERIFY_TOKEN = os.environ.get('STRAVA_WEBHOOK_VERIFY_TOKEN')
+    STRAVA_WEBHOOK_BASE_URL = 'https://www.strava.com/api/v3/push_subscriptions'
 
 
 class ProductionConfig(Config):

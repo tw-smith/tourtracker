@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<form class="form">
+    <button type="submit" formaction={{ url_for('strava_webhook.create_webhook_subscription') }}>Subscribe to webook</button>
+    <button type="submit" formaction={{ url_for('strava_webhook.view_webhook_subscription') }}>View Subscription</button>
+    <button type="submit" formaction={{ url_for('strava_webhook.delete_webhook_subscription') }}>Delete subscription</button>
+ </form>
+
+ {% if subscription_info %}
+    <p>{{ subscription_info }}</p>
+{% endif %}
+
+
+
+{% endblock %}

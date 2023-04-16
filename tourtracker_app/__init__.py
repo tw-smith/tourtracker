@@ -1,4 +1,6 @@
-from flask import Flask
+from flask import Flask, flash, redirect, url_for
+from functools import wraps
+from flask_login import current_user
 from config import Config, DevelopmentConfig, ProductionConfig
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -30,16 +32,16 @@ def init_webhooks(base_url):
     pass
 
 
-async def create_webhook_subscription(app):
-    params = dict(client_id=app.config['STRAVA_CLIENT_ID'], 
-                  client_secret=app.config['STRAVA_CLIENT_SECRET'],
-                  callback_url=app.config['STRAVA_WEBHOOK_CALLBACK_URL'], 
-                  verify_token=app.config['STRAVA_WEBHOOK_VERIFY_TOKEN'])
-    base_url = 'https://www.strava.com/api/v3/push_subscriptions'
-    post_url = base_url + ("?" + urlencode(params))
-    response = await requests.post(post_url)
-    print('response')
-    return response
+# async def create_webhook_subscription(app):
+#     params = dict(client_id=app.config['STRAVA_CLIENT_ID'], 
+#                   client_secret=app.config['STRAVA_CLIENT_SECRET'],
+#                   callback_url=app.config['STRAVA_WEBHOOK_CALLBACK_URL'], 
+#                   verify_token=app.config['STRAVA_WEBHOOK_VERIFY_TOKEN'])
+#     base_url = 'https://www.strava.com/api/v3/push_subscriptions'
+#     post_url = base_url + ("?" + urlencode(params))
+#     response = await requests.post(post_url)
+#     print('response')
+#     return response
 
 
 
@@ -102,6 +104,13 @@ def create_app(config_class=Config):
         app.logger.setLevel(logging.INFO)
         app.logger.info('Arcade startup')
 
-    response = create_webhook_subscription(app)
-    print(response)
+
+
+
+
+
+
+
+
+
     return app

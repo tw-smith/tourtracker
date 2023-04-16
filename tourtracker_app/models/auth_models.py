@@ -21,6 +21,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(db.String(50), unique=True)
     email = db.Column(db.String(50), unique=True)
+    isadmin = db.Column(db.Boolean(1))
     password_hash = db.Column(db.String(128))
     verified = db.Column(db.Boolean(1))
     strava_athlete_id = db.Column(db.Integer, unique=True, index=True)
@@ -32,10 +33,12 @@ class User(db.Model):
 
     def __init__(self, email, password):
         self.uuid = str(uuid.uuid4())
+        self.isadmin = False
         self.email = email
         self.password_hash = ph.hash(password)
         self.verified = False
         self.strava_athlete_id = None
+
         # self.strava_access_token = None
         # self.strava_refresh_token = None
 
