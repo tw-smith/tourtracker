@@ -1,6 +1,7 @@
 alembic==1.9.2
 argon2-cffi==21.3.0
 argon2-cffi-bindings==21.2.0
+asgiref==3.6.0
 blinker==1.5
 certifi==2022.12.7
 cffi==1.15.1

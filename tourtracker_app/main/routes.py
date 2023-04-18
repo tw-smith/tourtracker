@@ -29,9 +29,12 @@ def user_profile():
     else:
         strava_authenticated = False
 
-    user_tours = current_user.tours
-
-    return render_template('user_profile.html', email=current_user.email, strava_authenticated=strava_authenticated, user_tours=user_tours, form=form) #TODO put in logic for if we are not linked to strava
+    return render_template('user_profile.html',
+                           email=current_user.email,
+                           strava_authenticated=strava_authenticated,
+                           is_admin=current_user.isadmin,
+                           user_tours=current_user.tours,
+                           form=form) #TODO put in logic for if we are not linked to strava
 
 
 @bp.route('/tour/<uuid>', methods=['GET'])
