@@ -62,6 +62,7 @@ def create_app(config_class=Config):
         # Update any base URLs or webhooks to use the public ngrok URL
         app.config["BASE_URL"] = public_url
         app.config["STRAVA_WEBHOOK_CALLBACK_URL"] = public_url + '/strava_webhook/callback'
+        app.config["STRAVA_REDIRECT_URL"] = public_url + '/strava/token_exchange'
         init_webhooks(public_url)
 
     else:

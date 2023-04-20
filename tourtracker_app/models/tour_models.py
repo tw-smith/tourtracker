@@ -9,18 +9,18 @@ class Tour(db.Model):
     tour_name = db.Column(db.String(50))
     start_date = db.Column(db.Integer)
     end_date = db.Column(db.Integer)
-    refresh_interval = db.Column(db.Integer)
-    last_refresh = db.Column(db.Integer)
+    auto_refresh = db.Column(db.Boolean(1))
+    #refresh_interval = db.Column(db.Integer)
+    #last_refresh = db.Column(db.Integer)
     user_id = db.Column(db.String(50), db.ForeignKey('user.uuid'), index=True)
     tour_activities = db.relationship('TourActivities', backref='tour', lazy='dynamic', cascade='all, delete')
 
-    def __init__(self, tour_name, start_date, end_date, refresh_interval, last_refresh, user_id):
+    def __init__(self, tour_name, start_date, end_date, auto_refresh, user_id):
         self.tour_uuid = str(uuid.uuid4())
         self.tour_name = tour_name
         self.start_date = start_date
         self.end_date = end_date
-        self.refresh_interval = refresh_interval
-        self.last_refresh = last_refresh
+        self.auto_refresh = auto_refresh,
         self.user_id = user_id
 
     def __repr__(self):

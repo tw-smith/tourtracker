@@ -19,16 +19,28 @@ def handle_strava_api_response(response):
                 raise StravaBadRequestException(response_json['message'])
         
 
-def get_strava_activities(user, start_timestamp, end_timestamp):
-    base_url = 'https://www.strava.com/api/v3/athlete/activities'
-        # Get access token
-    access_token = user.strava_access_token[0]
 
-    # Check if access token has expired, and if so, refresh tokens
-    if access_token.check_token_valid() == False:
+def strava_request_header_prep(user):
+    # Check access token validity and refresh if required
+    access_token = user.strava_access_token[0]
+    if access_token.check_token_valid() is False:
         access_token.refresh_access_token(user.strava_refresh_token[0])
 
-    headers = {'Authorization': 'Bearer ' + user.strava_access_token[0].access_token}
+    # Set request headers
+    return {'Authorization': 'Bearer ' + user.strava_access_token[0].access_token}
+
+
+def get_individual_strava_activity(user, activity_id):
+    base_url = 'https://www.strava.com/api/v3/activities'
+    headers = strava_request_header_prep(user)
+    full_url = base_url + '/' + str(activity_id)
+    response = handle_strava_api_response(requests.get(full_url, headers=headers))
+    return response
+
+
+def get_strava_activities(user, start_timestamp, end_timestamp):
+    base_url = 'https://www.strava.com/api/v3/athlete/activities'
+    headers = strava_request_header_prep(user)
     params = dict(before=end_timestamp, after=start_timestamp, page=1, per_page=30)
     activities = []
     while True:

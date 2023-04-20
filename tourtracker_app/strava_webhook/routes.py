@@ -5,7 +5,10 @@ from flask import current_app, request, make_response, render_template, flash, r
 from urllib.parse import urlencode
 from flask_login import login_required, current_user
 from tourtracker_app.models.strava_api_models import StravaWebhookSubscription
+from tourtracker_app.models.tour_models import TourActivities, Tour
 from tourtracker_app import db
+from tourtracker_app.strava_api_auth.strava_api_utilities import get_individual_strava_activity
+from datetime import datetime
 
 
 @bp.route('/subscribe')
@@ -56,7 +59,7 @@ def delete_webhook_subscription():
         flash(response.json())
     return redirect(url_for('strava_webhook.webhook_admin'))
 
-@bp.route('/callback', methods=['GET', 'POST']) #TODO behaviour on POST when strava sends an update
+@bp.route('/callback', methods=['GET', 'POST'])
 def webhook_response():
     if request.method == 'GET':
         challenge = request.args.get('hub.challenge')
@@ -67,6 +70,79 @@ def webhook_response():
         else:
             body = {'hub.challenge': challenge}
             return make_response(body, 200)
+    if request.method == 'POST': #TODO this might need to be async to return 200 to strava within 2 secs
+        post_body = request.get_json()
+        if post_body['object_type'] == 'athlete':
+            # do athelete stuff
+            return make_response(200)
+        elif post_body['object_type'] == 'activity':
+            activity_id = post_body['object_id']
+            if post_body['aspect_type'] == 'create':
+                data = get_individual_strava_activity(current_user, activity_id)
+                in_date_range, tour = check_tour_date_range(data['start_date_local'])
+                if in_date_range:
+                    if check_activity_exists(data['id']) is False:
+                        new_activity = TourActivities(strava_activity_id=data['id'],
+                                                      activity_name=data['name'],
+                                                      activity_date=data['start_date_local'],
+                                                      summary_polyline=data['map']['summary_polyline'],
+                                                      parent_tour=tour,
+                                                      user_id=current_user.uuid)
+                        db.session.add(new_activity)
+                        db.session.commit()
+
+            elif post_body['aspect_type'] == 'update':
+                need_to_update_db = False
+                activity = db.session.execute(db.Select(TourActivities).filter_by(strava_activity_id=activity_id)).first()
+                for field in post_body['updates']:
+                    if field == 'id':
+                        activity.strava_activity_id = post_body['updates']['id']
+                        need_to_update_db = True
+                    if field == 'name':
+                        activity.activity_name = post_body['updates']['id']
+                        need_to_update_db = True
+                    if field == 'start_date_local':
+                        activity.activity_date == post_body['updates']['start_date_local']
+                        need_to_update_db = True
+                    if field == 'map':
+                        if 'summary_polyline' in post_body['updates']['map']:
+                            activity.summary_polyline = post_body['updates']['map']['summary_polyline']
+                            need_to_update_db = True
+                if need_to_update_db:
+                    db.session.commit()
+
+            elif post_body['aspect_type'] == 'delete':
+                activity = db.session.execute(db.Select(TourActivities).filter_by(strava_activity_id=activity_id)).first()
+                db.session.delete(activity)
+                db.session.commit()
+        return make_response(200)
+
+
+def check_tour_date_range(activity_date):
+    tours = current_user.tours
+    if tours is not None:
+        for tour in tours:
+            if tour.auto_refresh:
+                if tour.start_date <= datetime.fromisoformat(activity_date).timestamp() <= tour.end_date:
+                    return True, tour
+                return False, None
+            return False, None
+    return False, None
+
+
+def check_activity_exists(activity_id):
+    activity = db.session.execute(db.Select(TourActivities).filter_by(strava_activity_id=activity_id)).all()
+    if activity is not None:
+        return True
+    return False
+
+
+        
+
+
+
+
+
 
 
 

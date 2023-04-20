@@ -81,19 +81,18 @@ def create_tour():
         start_timestamp = (datetime(form.start_date.data.year, form.start_date.data.month, form.start_date.data.day)).timestamp()
         end_timestamp = (datetime(form.end_date.data.year, form.end_date.data.month, form.end_date.data.day)).timestamp()
 
-        if form.auto_refresh.data is True:
-            refresh_interval = 21600
-            last_refresh = int(round(datetime.now().timestamp()))
-        else:
-            refresh_interval = None
-            last_refresh = None
+        # if form.auto_refresh.data is True:
+        #     refresh_interval = 21600
+        #     last_refresh = int(round(datetime.now().timestamp()))
+        # else:
+        #     refresh_interval = None
+        #     last_refresh = None
 
         tour = Tour(
             tour_name=tour_name,
             start_date=start_timestamp,
             end_date=end_timestamp,
-            refresh_interval=refresh_interval,
-            last_refresh=last_refresh,
+            auto_refresh=form.auto_refresh.data,
             user_id=current_user.uuid
         )
         db.session.add(tour)
