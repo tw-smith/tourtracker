@@ -67,10 +67,11 @@
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    background-image: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 31%),
+    background-image: linear-gradient(180deg, rgba(255,255,255,1) 10%, rgba(255,255,255,0) 40%),
                       url('/static/assets/images/DSC_0439.jpg');
-    background-size: contain;
+    background-size: 100% auto;
     background-repeat: no-repeat;
+    background-position-y: 100%;
     flex-grow: 4;
 }
 
