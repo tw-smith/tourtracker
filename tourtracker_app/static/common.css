@@ -4,25 +4,133 @@
 }
 @font-face {
     font-family: "press start";
-    src: url('/static/assets/Press_Start_2P/PressStart2P-Regular.ttf') format('truetype');
+    src: url('/static/assets/fonts/Press_Start_2P/PressStart2P-Regular.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: Kanit;
+    src: url('/static/assets/fonts/Kanit/Kanit-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal
+}
+
+@font-face {
+    font-family: Kanit;
+    src: url('/static/assets/fonts/Kanit/Kanit-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
 }
 
 
-h1 {
-    font-family: "retronoid";
+:root {
+    /* Font CSS Variables */
+    --title-font-weight: 700;
+    --title-font-color: black;
+    --title-font-family: 'Kanit';
+
+    --ui-font-weight: 300;
+    --ui-font-color: black;
+    --ui-font-family: 'Kanit';
+
+    /* Color CSS variables */
+    --background-color: rgba(203,250,226,1);
 }
+
+.page-title {
+    font-family: var(--title-font-family), sans-serif;
+    font-weight: var(--title-font-weight);
+    color: var(--title-font-color);
+    text-align: center;
+}
+
+.button {
+    font-family: var(--ui-font-family), sans-serif;
+    font-weight: 400;
+    color: var(--ui-font-color)
+}
+
+.container {
+    width: 100vw;
+    height: 100vh;
+    /*background: var(--background-color);*/
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.home-splash {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    background-image: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 31%),
+                      url('/static/assets/images/DSC_0439.jpg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    flex-grow: 4;
+}
+
+.button--home-splash {
+    background-color: black;
+    color: white;
+    padding: 0.75rem 2rem 0.75rem 2rem;
+    border: none;
+    border-radius: 0.25rem;
+}
+
+.button--navbar {
+    background-color: white;
+    color: black;
+    border: 0.1rem solid black;
+    border-radius: 0.25rem;
+    padding: 0.75rem 2rem 0.75rem 2rem;
+}
+
+.navbar {
+    background: white;
+    height: 10vh;
+    width: 100%;
+}
+
+.navbar__content {
+    padding: 0 1rem 1rem 1rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    list-style: none;
+}
+
+.footer {
+    color: black;
+    width: 100%;
+    height: 5vh;
+}
+
+.acknowledgments {
+    text-align: center;
+    font-weight: var(--ui-font-weight);
+    font-family: var(--ui-font-family);
+    color: var(--ui-font-color)
+}
+
+.acknowledgments a {
+    color: black;
+    font-weight: bold;
+}
+
+
+
 
 #map {
     height: 1200px;
     width: 1800px;
 }
 
-
-:root {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
 
 .form {
     display: flex;

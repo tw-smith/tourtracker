@@ -1,10 +1,42 @@
 {% extends "base.html" %}
 {% block content %}
-  <h1 id="draw">Tour Tracker</h1>
-  <form class="form">
-    <button class="form__item button" type="submit" formaction={{ url_for('auth.login') }}>Log In</button>
-    <button class="form__item button" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>
-  </form>
+    <div class="navbar">
+        <ul class="navbar__content">
+            <li>
+                <img src="static/assets/images/icons8-hamburger-menu-48.png"
+                     height=30px
+                     width=30px
+                     alt="The hamburger menu icon">
+            </li>
+            <li>logo</li>
+            <li>
+                <button class="button button--navbar" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>
+            </li>
+        </ul>
+    </div>
+    <div class="home-splash">
+        <h1 class="page-title">This is TourTracker</h1>
+        <h3 class="page-title">Making it easy to track, record and share your bike tours.</h3>
+      <form class="form">
+        <button class="form__item button--home-splash" type="submit" formaction={{ url_for('auth.login') }}>Log In</button>
+        <button class="form__item button--home-splash" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>
+      </form>
+    </div>
+
+    <div class="home-outline">
+        <ol>
+            <li>Connect your Strava account</li>
+            <li>Go ride and upload your ride as normal</li>
+            <li>tour tracker automatically updates your tour map and stats</li>
+            <li>Share your tour!</li>
+        </ol>
+    </div>
+
+    <div class="footer">
+        <p class="acknowledgments">Site designed by <a href="https://tw-smith.me" target="_blank">Toby Smith</a>.
+            Icons by <a href="https://icons8.com/" target="_blank">icons8</a></p>
+    </div>
+
 
 
 
