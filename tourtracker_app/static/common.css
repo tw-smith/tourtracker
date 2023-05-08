@@ -74,13 +74,33 @@
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    background-image: linear-gradient(180deg, rgba(255,255,255,1) 10%, rgba(255,255,255,0) 40%),
-                      url('/static/assets/images/DSC_0439.jpg');
+
     background-size: 100% auto;
     background-repeat: no-repeat;
     background-position-y: 100%;
     flex-grow: 4;
 }
+
+.home-splash-img {
+    background-image: linear-gradient(180deg, rgba(255,255,255,1) 10%, rgba(255,255,255,0) 40%),
+                  url('/static/assets/images/DSC_0439_480.jpg');
+    }
+
+
+@media screen and (min-width: 480px) {
+    .home-splash-img {
+        background-image: linear-gradient(180deg, rgba(255,255,255,1) 10%, rgba(255,255,255,0) 40%),
+                  url('/static/assets/images/DSC_0439_800.jpg');
+    }
+}
+
+@media screen and (min-width: 801px) {
+    .home-splash-img {
+        background-image: linear-gradient(180deg, rgba(255,255,255,1) 10%, rgba(255,255,255,0) 40%),
+                  url('/static/assets/images/DSC_0439_large.jpg');
+    }
+}
+
 
 .button--home-splash {
     background-color: black;
