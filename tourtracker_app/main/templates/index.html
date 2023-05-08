@@ -32,12 +32,12 @@
 
     <div class="homeContent">
         <div class="hamburgerMenu">
-        <ul>
-            <li>Entry 1</li>
-            <li>Entry 2</li>
-            <li>Entry 3</li>
-        </ul>
-    </div>
+            <ul>
+                <li>Entry 1</li>
+                <li>Entry 2</li>
+                <li>Entry 3</li>
+            </ul>
+        </div>
         <div class="home-splash home-splash-img" id="home-splash">
             <h1 class="page-title">This is TourTracker</h1>
             <h3 class="page-title">Making it easy to track, record and share your bike tours.</h3>
@@ -47,13 +47,33 @@
           </form>
     </div>
         <div class="home-outline">
-        <ol>
-            <li>Connect your Strava account</li>
-            <li>Go ride and upload your ride as normal</li>
-            <li>tour tracker automatically updates your tour map and stats</li>
-            <li>Share your tour!</li>
-        </ol>
-    </div>
+            <div class="home-outline__text">
+                <h3>Connect your Strava account</h3>
+                <p>Let Strava know that you're happy to share some of your data with TourTracker</p>
+            </div>
+            <div class="home-outline__image">
+                <img src="/static/assets/images/DSC_0168_1600.jpg" alt="A cyclist on a salt pan">
+            </div>
+            <div class="home-outline__text">
+                <h3>Go ride and enjoy your tour</h3>
+                <p>Upload your rides to Strava as you normally would</p>
+            </div>
+            <div class="home-outline__image">
+                <img src="/static/assets/images/DSC_0665_1600.jpg" alt="A view towards Monte Fitzroy">
+            </div>
+            <div class="home-outline__text">
+                <h3>TourTracker automatically updates</h3>
+                <p>TourTracker will handle everything in the background and your tour stats and map will update shortly after you upload your Strava activity</p>
+            </div>
+            <div class="home-outline__image">
+                <img src="/static/assets/images/DSC_0000_1600.jpg" alt="A winding road in Mexico">
+            </div>
+            <div class="home-outline__text">
+                <h3>Share your tour!</h3>
+                <p>Share your live tour stats either by sending a link to friends and family or embedding TourTracker in your own website.</p>
+            </div>
+            <button class="form__item button--home-splash" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>
+        </div>
     </div>
 
 
