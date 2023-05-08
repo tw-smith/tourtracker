@@ -1,20 +1,16 @@
 <!DOCTYPE html>
 <html>
   <head>
-    {% block head %}
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tour Tracker</title>
     <!-- <script type="module" src="/static/built/maps.js"></script> -->
     <script type="module" src="/static/built/drawmap.js"></script>
-   
-
-
     <link href="/static/common.css" rel="stylesheet">
-    {% endblock %}
+    {% block head %}{% endblock %}
   </head>
   <body>
-    <div class="container">
+    <div class="container" id="container">
         {% block content %}{% endblock %}
     </div>
   </body>

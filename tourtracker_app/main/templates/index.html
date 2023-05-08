@@ -1,12 +1,23 @@
 {% extends "base.html" %}
+{%  block head %}
+    <script type="module" src="/static/built/index.js"></script>
+{% endblock %}
+
+
 {% block content %}
-    <div class="navbar">
+    <div class="navbar" id="navbar">
         <ul class="navbar__content">
-            <li>
+            <li id="hamburgerToggle">
                 <img src="static/assets/images/icons8-hamburger-menu-48.png"
                      height=40px
                      width=40px
-                     alt="The hamburger menu icon">
+                     alt="The hamburger menu icon"
+                     id="openIcon">
+                <img src="static/assets/images/icons8-multiply-48.png"
+                     height="40px"
+                     width="40px"
+                     alt="The close menu icon"
+                     id="closeIcon">
             </li>
             <li>
                 <img src="static/assets/images/tourtracker_logo.png"
@@ -18,16 +29,24 @@
 {#            </li>#}
         </ul>
     </div>
-    <div class="home-splash">
-        <h1 class="page-title">This is TourTracker</h1>
-        <h3 class="page-title">Making it easy to track, record and share your bike tours.</h3>
-      <form class="form">
-        <button class="form__item button--home-splash" type="submit" formaction={{ url_for('auth.login') }}>Log In</button>
-        <button class="form__item button--home-splash" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>
-      </form>
-    </div>
 
-    <div class="home-outline">
+    <div class="homeContent">
+        <div class="hamburgerMenu">
+        <ul>
+            <li>Entry 1</li>
+            <li>Entry 2</li>
+            <li>Entry 3</li>
+        </ul>
+    </div>
+        <div class="home-splash" id="home-splash">
+            <h1 class="page-title">This is TourTracker</h1>
+            <h3 class="page-title">Making it easy to track, record and share your bike tours.</h3>
+          <form class="form">
+            <button class="form__item button--home-splash" type="submit" formaction={{ url_for('auth.login') }}>Log In</button>
+            <button class="form__item button--home-splash" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>
+          </form>
+    </div>
+        <div class="home-outline">
         <ol>
             <li>Connect your Strava account</li>
             <li>Go ride and upload your ride as normal</li>
@@ -35,6 +54,8 @@
             <li>Share your tour!</li>
         </ol>
     </div>
+    </div>
+
 
     <div class="footer">
         <p class="acknowledgments">Site by <a href="https://tw-smith.me" target="_blank">Toby Smith</a>.

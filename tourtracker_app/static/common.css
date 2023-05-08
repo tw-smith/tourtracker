@@ -61,6 +61,13 @@
     margin-right: auto;
 }
 
+.homeContent {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 4;
+}
+
 .home-splash {
     width: 100%;
     display: flex;
@@ -99,12 +106,56 @@
 
 .navbar__content {
     padding: 0 1rem 1rem 1rem;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
+    /*display: flex;*/
+    /*flex-direction: row;*/
+    /*justify-content: space-between;*/
+    /*align-items: center;*/
     list-style: none;
 }
+
+.sideMenu {
+    width: 50vw;
+    height: 100%;
+    background-color: white;
+}
+
+.hamburgerMenu {
+    position: fixed;
+    transform: translateX(-100%);
+    transition: transform 0.2s;
+    z-index: 99;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.showHamburgerMenu {
+    transform: translateX(0);
+}
+
+#hamburgerToggle {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 100;
+}
+
+#closeIcon {
+    display: none;
+    z-index: 100;
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+}
+
+
+
 
 .footer {
     color: black;
