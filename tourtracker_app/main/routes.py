@@ -92,7 +92,7 @@ def create_tour():
             tour_name=tour_name,
             start_date=start_timestamp,
             end_date=end_timestamp,
-            auto_refresh=form.auto_refresh.data,
+            # auto_refresh=form.auto_refresh.data,
             user_id=current_user.uuid
         )
         db.session.add(tour)
