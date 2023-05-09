@@ -6,7 +6,7 @@
 
 {% block content %}
     <div class="navbar" id="navbar">
-        <ul class="navbar__content">
+        <ul class="navbar__content noBullets">
             <li>
                 <img src="static/assets/images/tourtracker_logo.png"
                      height="50px"
@@ -26,27 +26,23 @@
                      id="closeIcon"
                      class="pointer">
             </li>
-
-{#            <li>#}
-{#                <button class="button button--navbar" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>#}
-{#            </li>#}
         </ul>
     </div>
 
     <div class="homeContent">
         <div class="hamburgerMenu">
-            <ul class="hamburgerMenu__items">
-                <li class="pointer">Features</li>
-                <li class="pointer">About TourTracker</li>
-                <li class="pointer">Help</li>
+            <ul class="hamburgerMenu__items noBullets">
+                <li class="pointer"><p>Features</p></li>
+                <li class="pointer"><p>About TourTracker</p></li>
+                <li class="pointer"><p>Help</p></li>
             </ul>
         </div>
         <div class="home-splash home-splash-img" id="home-splash">
-            <h1 class="page-title">This is TourTracker</h1>
-            <h3 class="page-title">Making it easy to track, record and share your bike tours.</h3>
+            <h1>This is TourTracker</h1>
+            <h3>Making it easy to track, record and share your bike tours.</h3>
           <form class="form">
-            <button class="form__item button--home-splash pointer" type="submit" formaction={{ url_for('auth.login') }}>Log In</button>
-            <button class="form__item button--home-splash pointer" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>
+            <button class="button pointer" type="submit" formaction={{ url_for('auth.login') }}>Log In</button>
+            <button class="button pointer" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>
           </form>
     </div>
         <div class="home-outline">
@@ -93,7 +89,7 @@
             <div class="home-outline__text">
                 <h3>Share your tour!</h3>
                 <p>Share your live tour stats either by sending a link to friends and family or embedding TourTracker in your own website.</p>
-                <button class="form__item button--home-splash pointer" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>
+                <button class="button pointer" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>
             </div>
             <div class="home-outline__image">
                 <img
