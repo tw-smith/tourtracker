@@ -167,6 +167,11 @@ p {
     font-weight: bold;
 }
 
+.generic-text {
+    text-align: center;
+    margin: 0 2rem 0 2rem;
+}
+
 
 /* || Home Page */
 .home-splash {
@@ -255,6 +260,7 @@ p {
 .form {
     display: flex;
     flex-direction: column;
+    margin: 2rem 0 2rem 0;
 }
 
 .form__input {
