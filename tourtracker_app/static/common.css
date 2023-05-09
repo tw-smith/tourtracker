@@ -256,6 +256,30 @@ p {
     width: 100%;
 }
 
+/* || Tour Summary Table */
+
+.tour-table {
+    width: 80%;
+    display: grid;
+    grid-template-columns: 40% 30% 30%;
+    grid-template-rows: min-content;
+}
+
+.tour-table__name {
+    grid-column-start: 1;
+    grid-column-end: 2;
+}
+
+.tour-table__start-date {
+    grid-column-start: 2;
+    grid-column-end: 3;
+}
+
+.tour-table__end-date {
+    grid-column-start: 3;
+    grid-column-end: 4;
+}
+
 /* || Forms */
 .form {
     display: flex;

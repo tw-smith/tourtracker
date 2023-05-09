@@ -21,21 +21,32 @@
 
   <p>User email: {{ email }}</p>
 
-  {% if strava_authenticated %}
-    <form method="POST" action="/createtour" class="form">
-      {{ form.csrf_token }}
-      {{ form.tour_name(class="form__input") }}
-      {{ form.start_date(class="form__input")  }}
+{#  {% if strava_authenticated %}#}
+{#    <form method="POST" action="/createtour" class="form">#}
+{#      {{ form.csrf_token }}#}
+{#        <p>{{ form.tour_name.label }}</p>#}
+{#      {{ form.tour_name(class="form__input") }}#}
+{#        <p>{{ form.start_date.label }}</p>#}
+{#      {{ form.start_date(class="form__input")  }}#}
 {#      {{ form.auto_refresh(class="form__input")  }}#}
-      {{ form.end_date(class="form__input")  }}
-      {{ form.submit(class="button pointer") }}
-    </form>
-  {% endif %}
+{#        <p>{{ form.end_date.label }}</p>#}
+{#      {{ form.end_date(class="form__input")  }}#}
+{#      {{ form.submit(class="button pointer") }}#}
+{#    </form>#}
+{#  {% endif %}#}
 
     {% if user_tours %}
-      {% for tour in user_tours %}
-        <a href="{{ url_for('main.tour_detail', uuid=tour.tour_uuid) }}">{{ tour.tour_name }}</a>
-      {% endfor %}
+        <div class="tour-table">
+            <p class="tour-table__name">Tour Name</p>
+            <p class="tour-table__start-date">Start Date</p>
+            <p class="tour-table__end-date">End Date</p>
+            {% for tour in user_tours %}
+                <a class="tour-table__name" href={{ url_for('main.tour_detail', uuid=tour.tour_uuid) }}>{{ tour.tour_name }}</a>
+                <p class="tour-table__start-date">{{ tour.start_date | timestamp_to_str }}</p>
+                <p class="tour-table__end-date">{{ tour.end_date | timestamp_to_str }}</p>
+            {% endfor %}
+        </div>
+
     {% endif %}
 
 {#    <form class="form">#}
@@ -53,7 +64,9 @@
 
       {% if not strava_authenticated %}
           <form>
-      <button class="button pointer" type="submit" formaction={{ url_for('strava_api_auth.strava_auth') }}>Link Strava</button>
+            <button class="button pointer" type="submit" formaction={{ url_for('strava_api_auth.strava_auth') }}>Link Strava</button>
+      {% else %}
+              <button class="button pointer" type="submit" formaction={{ url_for('main.create_tour') }}>Create Tour</button>
       {% endif %}
       {% if is_admin %}
         <button class="button pointer" type="submit" formaction={{ url_for('strava_webhook.webhook_admin') }}>Webhook Admin</button>
