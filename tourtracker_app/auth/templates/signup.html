@@ -1,28 +1,38 @@
 {% extends "base.html" %}
 {% block content %}
-        <h3 class="text">Sign Up</h3>
+    <div class="navbar" id="navbar">
+        <ul class="navbar__content noBullets">
+            <li>
+                <a href={{ url_for('main.index') }}><img src="/static/assets/images/tourtracker_logo.png"
+                     height="50px"
+                   alt="The tourtracker website logo"></a>
+            </li>
+        </ul>
+    </div>
+        <h1>Sign Up</h1>
         {% with messages = get_flashed_messages() %}
         {% if messages %}
         {% for message in messages %}
-            <h3 class="text text--red">{{ message }}</h3>
+            <h3 class="form__error">{{ message }}</h3>
         {% endfor %}
         {% endif %}
         {% endwith %}
         <form class="form" action="" method="post" novalidate>
             {{ form.hidden_tag() }}
-            {{ form.email(class_="form__item") }}
             {% for error in form.email.errors %}
-            <p class="text__formerror">{{ error }}</p>
+                <p class="form__error">{{ error }}</p>
             {% endfor %}
-            {{ form.password(class_="form__item") }}
+            {{ form.email(class_="form__input") }}
             {% for error in form.password.errors %}
-            <p class="text__formerror">{{ error }}</p>
+                <p class="form__error">{{ error }}</p>
             {% endfor %}
-            {{ form.repeat_pw(class="form__item") }}
+            {{ form.password(class_="form__input") }}
             {% for error in form.repeat_pw.errors %}
-            <p class="text__formerror">{{ error }}</p>
+                <p class="form__error">{{ error }}</p>
             {% endfor %}
-            {{ form.submit(class_="form__item") }}
+            {{ form.repeat_pw(class="form__input") }}
+
+            {{ form.submit(class_="button pointer") }}
         </form>
 {% endblock %}
 

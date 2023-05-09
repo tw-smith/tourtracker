@@ -252,7 +252,24 @@ p {
 }
 
 /* || Forms */
+.form {
+    display: flex;
+    flex-direction: column;
+}
 
+.form__input {
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+ }
+
+.form__link {
+    text-decoration: none;
+}
+
+.form__error {
+    color: rgba(255,0,0,1);
+    margin: 0;
+}
 
 
 
@@ -263,11 +280,3 @@ p {
 }
 
 
-.form {
-    display: flex;
-    flex-direction: column;
-}
-
-.form__item {
-    margin: 0.25rem;
-}
