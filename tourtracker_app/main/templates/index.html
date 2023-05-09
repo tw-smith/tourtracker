@@ -17,12 +17,14 @@
                      height=40px
                      width=40px
                      alt="The hamburger menu icon"
-                     id="openIcon">
+                     id="openIcon"
+                     class="pointer">
                 <img src="static/assets/images/icons8-multiply-48.png"
                      height="40px"
                      width="40px"
                      alt="The close menu icon"
-                     id="closeIcon">
+                     id="closeIcon"
+                     class="pointer">
             </li>
 
 {#            <li>#}
@@ -34,17 +36,17 @@
     <div class="homeContent">
         <div class="hamburgerMenu">
             <ul class="hamburgerMenu__items">
-                <li>Features</li>
-                <li>About TourTracker</li>
-                <li>Help</li>
+                <li class="pointer">Features</li>
+                <li class="pointer">About TourTracker</li>
+                <li class="pointer">Help</li>
             </ul>
         </div>
         <div class="home-splash home-splash-img" id="home-splash">
             <h1 class="page-title">This is TourTracker</h1>
             <h3 class="page-title">Making it easy to track, record and share your bike tours.</h3>
           <form class="form">
-            <button class="form__item button--home-splash" type="submit" formaction={{ url_for('auth.login') }}>Log In</button>
-            <button class="form__item button--home-splash" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>
+            <button class="form__item button--home-splash pointer" type="submit" formaction={{ url_for('auth.login') }}>Log In</button>
+            <button class="form__item button--home-splash pointer" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>
           </form>
     </div>
         <div class="home-outline">
@@ -72,7 +74,7 @@
             <div class="home-outline__text">
                 <h3>Share your tour!</h3>
                 <p>Share your live tour stats either by sending a link to friends and family or embedding TourTracker in your own website.</p>
-                <button class="form__item button--home-splash" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>
+                <button class="form__item button--home-splash pointer" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>
             </div>
             <div class="home-outline__image">
                 <img src="/static/assets/images/DSC03334_1600.jpg" alt="A cyclist and his bike">
