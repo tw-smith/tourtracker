@@ -7,7 +7,7 @@ load_dotenv(os.path.join(basedir, '.env'))
 class Config(object):
     APP_TITLE = 'Tour Tracker'
     JWT_ISSUER = 'http://tourtracker.tw-smith.me'
-    SECRET_KEY = os.environ.get('SECRET_KEY')
+    SECRET_KEY = os.environ.get('DEV_SECRET_KEY')
     GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY')
     STRAVA_CLIENT_ID = os.environ.get('STRAVA_CLIENT_ID')
     STRAVA_CLIENT_SECRET = os.environ.get('STRAVA_CLIENT_SECRET')
