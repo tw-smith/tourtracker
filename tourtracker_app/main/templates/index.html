@@ -7,6 +7,11 @@
 {% block content %}
     <div class="navbar" id="navbar">
         <ul class="navbar__content">
+            <li>
+                <img src="static/assets/images/tourtracker_logo.png"
+                     height="50px"
+                     alt="The tourtracker website logo">
+            </li>
             <li id="hamburgerToggle">
                 <img src="static/assets/images/icons8-hamburger-menu-48.png"
                      height=40px
@@ -19,11 +24,7 @@
                      alt="The close menu icon"
                      id="closeIcon">
             </li>
-            <li>
-                <img src="static/assets/images/tourtracker_logo.png"
-                     height="50px"
-                     alt="The tourtracker website logo">
-            </li>
+
 {#            <li>#}
 {#                <button class="button button--navbar" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>#}
 {#            </li>#}
@@ -32,10 +33,10 @@
 
     <div class="homeContent">
         <div class="hamburgerMenu">
-            <ul>
-                <li>Entry 1</li>
-                <li>Entry 2</li>
-                <li>Entry 3</li>
+            <ul class="hamburgerMenu__items">
+                <li>Features</li>
+                <li>About TourTracker</li>
+                <li>Help</li>
             </ul>
         </div>
         <div class="home-splash home-splash-img" id="home-splash">
