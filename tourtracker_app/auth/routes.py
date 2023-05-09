@@ -49,10 +49,8 @@ def signup():
     form = SignupForm()
     if request.method == 'POST':
         if form.validate_on_submit():
-            print("form valid")
             email = form.email.data
             password = form.password.data
-
             email_exists = db.session.execute(db.select(User).filter_by(email=email)).first()
             if email_exists:
                 flash('Account already exists!')

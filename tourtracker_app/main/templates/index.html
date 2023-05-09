@@ -1,10 +1,118 @@
 {% extends "base.html" %}
+{%  block head %}
+    <script type="module" src="/static/built/index.js"></script>
+{% endblock %}
+
+
 {% block content %}
-  <h1 id="draw">Tour Tracker</h1>
-  <form class="form">
-    <button class="form__item button" type="submit" formaction={{ url_for('auth.login') }}>Log In</button>
-    <button class="form__item button" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>
-  </form>
+    <div class="navbar" id="navbar">
+        <ul class="navbar__content noBullets">
+            <li>
+                <img src="static/assets/images/tourtracker_logo.png"
+                     height="50px"
+                     alt="The tourtracker website logo">
+            </li>
+            <li id="hamburgerToggle">
+                <img src="static/assets/images/icons8-hamburger-menu-48.png"
+                     height=40px
+                     width=40px
+                     alt="The hamburger menu icon"
+                     id="openIcon"
+                     class="pointer">
+                <img src="static/assets/images/icons8-multiply-48.png"
+                     height="40px"
+                     width="40px"
+                     alt="The close menu icon"
+                     id="closeIcon"
+                     class="pointer">
+            </li>
+        </ul>
+    </div>
+
+    <div class="homeContent">
+        <div class="hamburgerMenu">
+            <ul class="hamburgerMenu__items noBullets">
+                <li class="pointer"><p>Features</p></li>
+                <li class="pointer"><p>About TourTracker</p></li>
+                <li class="pointer"><p>Help</p></li>
+            </ul>
+        </div>
+        <div class="home-splash home-splash-img" id="home-splash">
+            <h1>This is TourTracker</h1>
+            <h3>Making it easy to track, record and share your bike tours.</h3>
+          <form class="form">
+            <button class="button pointer" type="submit" formaction={{ url_for('auth.login') }}>Log In</button>
+            <button class="button pointer" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>
+          </form>
+    </div>
+        <div class="home-outline">
+            <div class="home-outline__text">
+                <h3>Connect your Strava account</h3>
+                <p>Let Strava know that you're happy to share some of your data with TourTracker</p>
+            </div>
+            <div class="home-outline__image">
+                <!-- TODO these don't seem to be working -->
+                <img
+                    srcset="/static/assets/images/DSC_0168_1600.jpg 1600w,
+                            /static/assets/images/DSC_0168_800.jpg 800w,
+                            /static/assets/images/DSC_0168_480.jpg 480w"
+                    sizes="(max-width: 1000px) 100vw, (min-width: 1001px) 50vw"
+                    src="/static/assets/images/DSC_0168_1600.jpg"
+                    alt="A cyclist on a salt pan">
+            </div>
+            <div class="home-outline__text">
+                <h3>Go ride and enjoy your tour</h3>
+                <p>Upload your rides to Strava as you normally would</p>
+            </div>
+            <div class="home-outline__image">
+                <img
+                    srcset="/static/assets/images/DSC_0665_1600.jpg 1600w,
+                            /static/assets/images/DSC_0665_800.jpg 800w,
+                            /static/assets/images/DSC_0665_480.jpg 480w"
+                    sizes="(max-width: 1000px) 100vw, (min-width: 1001px) 50vw"
+                    src="/static/assets/images/DSC_0665_1600.jpg"
+                    alt="A view towards Monte Fitzroy">
+            </div>
+            <div class="home-outline__text">
+                <h3>TourTracker automatically updates</h3>
+                <p>TourTracker will handle everything in the background and your tour stats and map will update shortly after you upload your Strava activity</p>
+            </div>
+            <div class="home-outline__image">
+                <img
+                    srcset="/static/assets/images/DSC_0000_1600.jpg 1600w,
+                            /static/assets/images/DSC_0000_800.jpg 800w,
+                            /static/assets/images/DSC_0000_480.jpg 480w"
+                    sizes="(max-width: 1000px) 100vw, (min-width: 1001px) 50vw"
+                    src="/static/assets/images/DSC_0000_1600.jpg"
+                    alt="A winding road in Mexico">
+            </div>
+            <div class="home-outline__text">
+                <h3>Share your tour!</h3>
+                <p>Share your live tour stats either by sending a link to friends and family or embedding TourTracker in your own website.</p>
+                <form>
+                    <button class="button pointer" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>
+                </form>
+
+            </div>
+            <div class="home-outline__image">
+                <img
+                    srcset="/static/assets/images/DSC03334_1600.jpg 1600w,
+                            /static/assets/images/DSC03334_800.jpg 800w,
+                            /static/assets/images/DSC03334_480.jpg 480w"
+                    sizes="(max-width: 1000px) 100vw, (min-width: 1001px) 50vw"
+                    src="/static/assets/images/DSC03334_1600.jpg"
+                    alt="A cyclist and his bike">
+            </div>
+
+        </div>
+    </div>
+
+
+    <div class="footer">
+        <p class="acknowledgments">Site by <a href="https://tw-smith.me" target="_blank">Toby Smith</a>.
+            Icons by <a href="https://icons8.com/" target="_blank">icons8</a></p>
+    </div>
+
 
 
 

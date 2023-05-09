@@ -1,5 +1,5 @@
 from flask import Flask
-from config import Config
+from config import Config,DevelopmentConfig, ProductionConfig
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 # from tourtracker_app.models.auth_models import User
@@ -25,10 +25,10 @@ mail = Mail()
 
 def create_app(config_class=Config):
     app = Flask(__name__)
-    app.config.from_object(Config)
-
-
-
+    if app.debug:
+        app.config.from_object(DevelopmentConfig)
+    else:
+        app.config.from_object(ProductionConfig)
     db.init_app(app)
     migrate.init_app(app, db)
 
