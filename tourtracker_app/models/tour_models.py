@@ -39,6 +39,14 @@ class TourActivities(db.Model):
     parent_tour = db.Column(db.String(50), db.ForeignKey('tour.tour_uuid'), primary_key=True)
     user_id = db.Column(db.String(50), db.ForeignKey('user.uuid'), index=True)
 
+    def __init__(self, strava_activity_id, activity_name, activity_date, summary_polyline, parent_tour, user_id):
+        self.strava_activity_id = strava_activity_id
+        self.activity_name = activity_name
+        self.activity_date = activity_date
+        self.summary_polyline = summary_polyline
+        self.parent_tour = parent_tour
+        self.user_id = user_id
+
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 

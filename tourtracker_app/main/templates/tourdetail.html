@@ -19,9 +19,9 @@ defer
 ></script>
 
 <form class="form">
-    <button type="submit" class="form__item" formaction={{ url_for('main.refresh_tour', uuid=tour.tour_uuid) }}>Refresh</button>
-    <button type="submit" class="form__item" formaction={{ url_for('main.user_profile') }}>User Profile</button>
-    <button type="submit" class="form__item" formaction={{ url_for('main.delete_tour', uuid=tour.tour_uuid) }}>Delete Tour</button>
+    <button type="submit" class="button pointer" formaction={{ url_for('main.refresh_tour', uuid=tour.tour_uuid) }}>Refresh</button>
+    <button type="submit" class="button pointer" formaction={{ url_for('main.user_profile') }}>User Profile</button>
+    <button type="submit" class="button pointer" formaction={{ url_for('main.delete_tour', uuid=tour.tour_uuid) }}>Delete Tour</button>
 </form>
 
 {% endblock %}
