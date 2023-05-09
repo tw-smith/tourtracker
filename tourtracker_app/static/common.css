@@ -209,7 +209,7 @@ p {
 @media screen and (min-width: 801px), screen and (min-device-pixel-ratio: 2) {
     .home-splash-img {
         background-image: linear-gradient(180deg, rgba(255,255,255,1) 10%, rgba(255,255,255,0) 40%),
-                  url('/static/assets/images/DSC_0439.jpg');
+                  url('/static/assets/images/DSC_0439_2560.jpg');
     }
 }
 

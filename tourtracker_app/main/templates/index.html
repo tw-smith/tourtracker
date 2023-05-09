@@ -89,13 +89,16 @@
             <div class="home-outline__text">
                 <h3>Share your tour!</h3>
                 <p>Share your live tour stats either by sending a link to friends and family or embedding TourTracker in your own website.</p>
-                <button class="button pointer" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>
+                <form>
+                    <button class="button pointer" type="submit" formaction={{ url_for('auth.signup') }}>Sign Up</button>
+                </form>
+
             </div>
             <div class="home-outline__image">
                 <img
-                    srcset="/static/assets/images/DSC_03334_1600.jpg 1600w,
-                            /static/assets/images/DSC_03334_800.jpg 800w,
-                            /static/assets/images/DSC_03334_480.jpg 480w"
+                    srcset="/static/assets/images/DSC03334_1600.jpg 1600w,
+                            /static/assets/images/DSC03334_800.jpg 800w,
+                            /static/assets/images/DSC03334_480.jpg 480w"
                     sizes="(max-width: 1000px) 100vw, (min-width: 1001px) 50vw"
                     src="/static/assets/images/DSC03334_1600.jpg"
                     alt="A cyclist and his bike">
