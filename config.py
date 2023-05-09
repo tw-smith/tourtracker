@@ -12,12 +12,11 @@ class Config(object):
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'db/tour_tracker_dev.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    MAIL_SERVER='smtp.sendgrid.net'
-    MAIL_PORT=587
-    MAIL_USE_TLS=True
-    MAIL_USERNAME='apikey'
+    MAIL_SERVER = 'smtp.sendgrid.net'
+    MAIL_PORT = 587
+    MAIL_USE_TLS = True
+    MAIL_USERNAME = 'apikey'
     MAIL_PASSWORD = os.environ.get('SENDGRID_API_KEY')
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
     STRAVA_WEBHOOK_VERIFY_TOKEN = os.environ.get('STRAVA_WEBHOOK_VERIFY_TOKEN')
@@ -31,6 +30,7 @@ class ProductionConfig(Config):
     STRAVA_CLIENT_ID = os.environ.get('PROD_STRAVA_CLIENT_ID')
     STRAVA_CLIENT_SECRET = os.environ.get('PROD_STRAVA_CLIENT_SECRET')
     STRAVA_WEBHOOK_CALLBACK_URL = 'http://'
+
 
 
 class DevelopmentConfig(Config):

@@ -1,8 +1,8 @@
-"""resetting migrations yet again
+"""reset migrations after prod dev db mess
 
-Revision ID: 052a8c994ce8
+Revision ID: 4bdb05b0439b
 Revises: 
-Create Date: 2023-04-05 08:35:16.487003
+Create Date: 2023-04-15 20:19:12.411469
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '052a8c994ce8'
+revision = '4bdb05b0439b'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -22,6 +22,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('uuid', sa.String(length=50), nullable=True),
     sa.Column('email', sa.String(length=50), nullable=True),
+    sa.Column('isadmin', sa.Boolean(create_constraint=1), nullable=True),
     sa.Column('password_hash', sa.String(length=128), nullable=True),
     sa.Column('verified', sa.Boolean(create_constraint=1), nullable=True),
     sa.Column('strava_athlete_id', sa.Integer(), nullable=True),
@@ -60,7 +61,6 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('tour_uuid', sa.String(length=50), nullable=True),
     sa.Column('tour_name', sa.String(length=50), nullable=True),
-    sa.Column('site_url', sa.String(length=50), nullable=True),
     sa.Column('start_date', sa.Integer(), nullable=True),
     sa.Column('end_date', sa.Integer(), nullable=True),
     sa.Column('refresh_interval', sa.Integer(), nullable=True),
@@ -68,23 +68,21 @@ def upgrade():
     sa.Column('user_id', sa.String(length=50), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['user.uuid'], ),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('site_url'),
     sa.UniqueConstraint('tour_uuid')
     )
     with op.batch_alter_table('tour', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_tour_user_id'), ['user_id'], unique=False)
 
     op.create_table('tour_activities',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('strava_activity_id', sa.Integer(), nullable=True),
+    sa.Column('strava_activity_id', sa.Integer(), nullable=False),
     sa.Column('activity_name', sa.String(length=100), nullable=True),
     sa.Column('activity_date', sa.Integer(), nullable=True),
     sa.Column('summary_polyline', sa.String(length=100), nullable=True),
-    sa.Column('parent_tour', sa.String(length=50), nullable=True),
+    sa.Column('parent_tour', sa.String(length=50), nullable=False),
     sa.Column('user_id', sa.String(length=50), nullable=True),
     sa.ForeignKeyConstraint(['parent_tour'], ['tour.tour_uuid'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.uuid'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('strava_activity_id', 'parent_tour')
     )
     with op.batch_alter_table('tour_activities', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_tour_activities_user_id'), ['user_id'], unique=False)

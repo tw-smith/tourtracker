@@ -31,6 +31,7 @@
       {{ form.end_date }}
       {{ form.submit }}
     </form>
+  {% endif %}
 
     {% if user_tours %}
       {% for tour in user_tours %}
@@ -39,6 +40,7 @@
     {% endif %}
 
     <form class="form">
+
       <button class="button pointer" type="submit" formaction={{ url_for('auth.logout') }}>Log Out</button>
     </form>
 
@@ -49,6 +51,16 @@
       <button class="button pointer" type="submit" formaction={{ url_for('auth.logout') }}>Log Out</button>
    </form>
   {% endif %}
+
+
+      {% if not strava_authenticated %}
+      <button type="submit" formaction={{ url_for('strava_api_auth.strava_auth') }}>Link Strava</button>
+      {% endif %}
+      {% if is_admin %}
+        <button type="submit" formaction={{ url_for('strava_webhook.webhook_admin') }}>Webhook Admin</button>
+      {% endif %}
+      <button type="submit" formaction={{ url_for('auth.logout') }}>Log Out</button>
+    </form>
 
    
   {% endblock %}
