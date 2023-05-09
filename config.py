@@ -8,7 +8,7 @@ class Config(object):
     APP_TITLE = 'Tour Tracker'
     JWT_ISSUER = 'http://tourtracker.tw-smith.me'
     GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY')
-    STRAVA_SCOPE = 'activity:read'
+    STRAVA_SCOPE = os.environ.get('STRAVA_SCOPE')
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
@@ -29,7 +29,8 @@ class ProductionConfig(Config):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'db/tour_tracker_prod.db')
     STRAVA_CLIENT_ID = os.environ.get('PROD_STRAVA_CLIENT_ID')
     STRAVA_CLIENT_SECRET = os.environ.get('PROD_STRAVA_CLIENT_SECRET')
-    STRAVA_WEBHOOK_CALLBACK_URL='http://'
+    STRAVA_WEBHOOK_CALLBACK_URL = 'http://'
+
 
 
 class DevelopmentConfig(Config):
@@ -38,5 +39,3 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'db/tour_tracker_dev.db')
     STRAVA_CLIENT_ID = os.environ.get('DEV_STRAVA_CLIENT_ID')
     STRAVA_CLIENT_SECRET = os.environ.get('DEV_STRAVA_CLIENT_SECRET')
-
-

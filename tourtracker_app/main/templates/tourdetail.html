@@ -1,7 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
+    <div class="navbar" id="navbar">
+    <ul class="navbar__content noBullets">
+        <li>
+            <a href={{ url_for('main.index') }}><img src="/static/assets/images/tourtracker_logo.png"
+                 height="50px"
+               alt="The tourtracker website logo"></a>
+        </li>
+    </ul>
+</div>
 <h1>Tour Detail</h1>
-<h2>{{ tour.tour_name }}</h2>
+<h3>{{ tour.tour_name }}</h3>
 
 <div id="map"></div>
 <script async

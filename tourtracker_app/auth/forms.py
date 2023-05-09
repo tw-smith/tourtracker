@@ -45,6 +45,6 @@ class PasswordResetForm(FlaskForm):
 
     repeat_pw = PasswordField('Repeat Password',
                               validators=[DataRequired(), Length(min=8)],
-                              render_kw={"placeholder": "Confirm Password"})
+                              render_kw={"placeholder": "Confirm New Password"})
 
     submit = SubmitField('Reset Password')

@@ -1,11 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
+    <div class="navbar" id="navbar">
+        <ul class="navbar__content noBullets">
+            <li>
+                <a href={{ url_for('main.index') }}><img src="/static/assets/images/tourtracker_logo.png"
+                     height="50px"
+                   alt="The tourtracker website logo"></a>
+            </li>
+        </ul>
+    </div>
   <h1 id="draw">Tour Tracker</h1>
 
   {% with messages = get_flashed_messages() %}
   {% if messages %}
   {% for message in messages %}
-      <h3 class="text text--red">{{ message }}</h3>
+      <h3 class="form__error">{{ message }}</h3>
   {% endfor %}
   {% endif %}
   {% endwith %}
@@ -31,6 +40,19 @@
     {% endif %}
 
     <form class="form">
+
+      <button class="button pointer" type="submit" formaction={{ url_for('auth.logout') }}>Log Out</button>
+    </form>
+
+
+  {% else %}
+    <form class="form">
+      <button class="button pointer" type="submit" formaction={{ url_for('strava_api_auth.strava_auth') }}>Link Strava</button>
+      <button class="button pointer" type="submit" formaction={{ url_for('auth.logout') }}>Log Out</button>
+   </form>
+  {% endif %}
+
+
       {% if not strava_authenticated %}
       <button type="submit" formaction={{ url_for('strava_api_auth.strava_auth') }}>Link Strava</button>
       {% endif %}
@@ -39,6 +61,7 @@
       {% endif %}
       <button type="submit" formaction={{ url_for('auth.logout') }}>Log Out</button>
     </form>
+
    
   {% endblock %}
 

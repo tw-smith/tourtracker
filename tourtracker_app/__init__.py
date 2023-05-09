@@ -1,3 +1,4 @@
+
 from flask import Flask, flash, redirect, url_for
 from functools import wraps
 from flask_login import current_user
@@ -32,6 +33,7 @@ def init_webhooks(base_url):
     pass
 
 
+
 # async def create_webhook_subscription(app):
 #     params = dict(client_id=app.config['STRAVA_CLIENT_ID'], 
 #                   client_secret=app.config['STRAVA_CLIENT_SECRET'],
@@ -42,6 +44,7 @@ def init_webhooks(base_url):
 #     response = await requests.post(post_url)
 #     print('response')
 #     return response
+
 
 
 
