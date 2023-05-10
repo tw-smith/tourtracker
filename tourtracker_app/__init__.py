@@ -59,7 +59,7 @@ def create_app(config_class=Config):
         port = sys.argv[sys.argv.index("--port") + 1] if "--port" in sys.argv else 5000
 
         # Open a ngrok tunnel to the dev server
-        public_url = ngrok.connect(port).public_url
+        public_url = ngrok.connect(port, subdomain='stravadev', bind_tls=True).public_url
         print(" * ngrok tunnel \"{}\" -> \"http://127.0.0.1:{}\"".format(public_url, port))
 
         # Update any base URLs or webhooks to use the public ngrok URL

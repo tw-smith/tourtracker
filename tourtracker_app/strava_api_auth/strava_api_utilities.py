@@ -17,6 +17,7 @@ def handle_strava_api_response(response):
                 raise StravaBadRequestException(response_json['message'])
             if response.status_code == 429:
                 raise StravaBadRequestException(response_json['message'])
+
         
 
 def strava_request_header_prep(user):

@@ -61,12 +61,13 @@
 {#   </form>#}
 {#  {% endif %}#}
 
-
+        <form>
       {% if not strava_authenticated %}
-          <form>
+
             <button class="button pointer" type="submit" formaction={{ url_for('strava_api_auth.strava_auth') }}>Link Strava</button>
       {% else %}
               <button class="button pointer" type="submit" formaction={{ url_for('main.create_tour') }}>Create Tour</button>
+              <button class="button pointer" type="submit" formaction={{ url_for('strava_api_auth.strava_deauth') }}>Unlink Strava</button>
       {% endif %}
       {% if is_admin %}
         <button class="button pointer" type="submit" formaction={{ url_for('strava_webhook.webhook_admin') }}>Webhook Admin</button>
