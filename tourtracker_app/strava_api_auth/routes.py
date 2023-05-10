@@ -16,26 +16,33 @@ def strava_token_request(grant_type, code=None, refresh_token=None):
     response_json = response.json()
     return response_json
 
-# @bp.route('/refresh_tokens')
-# def refresh_tokens():
-#     response = strava_token_request('refresh_token', refresh_token=current_user.strava_refresh_token[0].refresh_token)
-#     strava_access_token = db.session.execute(db.Select(StravaAccessToken).filter_by(athlete_id=current_user.strava_athlete_id)).first()
-#     strava_refresh_token = db.session.execute(db.Select(StravaRefreshToken).filter_by(athlete_id=current_user.strava_athlete_id)).first()
-#     strava_access_token[0].access_token = response['access_token']
-#     strava_access_token[0].expires_at = response['expires_at']
-#     strava_refresh_token[0].refresh_token = response['refresh_token']
-#     print(strava_refresh_token[0].refresh_token)
-#     db.session.commit()
-#     return redirect(url_for('main.user_profile'))
-
-
-
-@bp.route('/strava')
+@bp.route('/strava') # TODO check scope and behaviour on access denied
 def strava_auth():
     strava_base_url = 'https://www.strava.com/oauth/authorize'
+    print(current_app.config['STRAVA_REDIRECT_URL'])
     params = dict(client_id=current_app.config['STRAVA_CLIENT_ID'], response_type='code', redirect_uri=current_app.config['STRAVA_REDIRECT_URL'], scope=current_app.config['STRAVA_SCOPE'])
     redirect_url = strava_base_url + ("?" + urlencode(params) if params else "")
     return redirect(redirect_url)
+
+@bp.route('strava_deauth')
+def strava_deauth():
+    if current_user.strava_access_token[0].check_token_valid() is False:
+        current_user.strava_access_token[0].refresh_access_token(current_user.strava_refresh_token[0])
+    strava_base_url = 'https://www.strava.com/oauth/deauthorize'
+    params = dict(access_token=current_user.strava_access_token[0].access_token)
+    deauth_url = strava_base_url + ("?" + urlencode(params) if params else "")
+    response = requests.post(deauth_url)
+    print(response.json())
+    if response.status_code == 200:
+        db.session.delete(current_user.strava_access_token)
+        db.session.delete(current_user.strava_refresh_token)
+        db.session.commit()
+        current_user.strava_athlete_id = None
+        flash('Strava deauthorisation successful!')
+    if response.status_code == 401:
+        flash('Strava deauthorisation not authorised')
+    return redirect(url_for('main.user_profile'))
+
 
 
 @bp.route('/token_exchange')

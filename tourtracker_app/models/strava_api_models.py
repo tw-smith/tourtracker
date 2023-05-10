@@ -1,8 +1,9 @@
-from flask import current_app
+
 from tourtracker_app import db
 import time
 import requests
 from tourtracker_app.strava_api_auth.strava_api_utilities import handle_strava_api_response
+from flask import current_app
 
 
 class StravaAccessToken(db.Model):
@@ -35,6 +36,13 @@ class StravaRefreshToken(db.Model):
     athlete_id = db.Column(db.Integer, db.ForeignKey('user.strava_athlete_id'), index=True, unique=True)
     refresh_token = db.Column(db.String(50), index=True)
 
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+   
+
+class StravaWebhookSubscription(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    subscription_id = db.Column(db.Integer, index=True, unique=True)
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}

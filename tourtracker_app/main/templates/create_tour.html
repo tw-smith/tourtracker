@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+        <div class="navbar" id="navbar">
+        <ul class="navbar__content noBullets">
+            <li>
+                <a href={{ url_for('main.index') }}><img src="/static/assets/images/tourtracker_logo.png"
+                     height="50px"
+                   alt="The tourtracker website logo"></a>
+            </li>
+        </ul>
+    </div>
+  {% if strava_authenticated %}
+    <form method="POST" action="/createtour" class="form">
+      {{ form.csrf_token }}
+        <p>{{ form.tour_name.label }}</p>
+      {{ form.tour_name(class="form__input") }}
+        <p>{{ form.start_date.label }}</p>
+      {{ form.start_date(class="form__input")  }}
+{#      {{ form.auto_refresh(class="form__input")  }}#}
+        <p>{{ form.end_date.label }}</p>
+      {{ form.end_date(class="form__input")  }}
+      {{ form.submit(class="button pointer") }}
+    </form>
+  {% endif %}
+{% endblock %}

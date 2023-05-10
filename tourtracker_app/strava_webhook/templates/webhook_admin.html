@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+{% for message in messages %}
+    <h3 class="text text--red">{{ message }}</h3>
+{% endfor %}
+{% endif %}
+{% endwith %}
+<form class="form">
+    <button type="submit" formaction={{ url_for('strava_webhook.create_webhook_subscription') }}>Subscribe to webook</button>
+    <button type="submit" formaction={{ url_for('strava_webhook.view_webhook_subscription') }}>View Subscription</button>
+    <button type="submit" formaction={{ url_for('strava_webhook.delete_webhook_subscription') }}>Delete subscription</button>
+    <button type="submit" formaction={{ url_for('main.user_profile') }}>Profile</button>
+ </form>
+
+ {% if subscription_info %}
+    <p>{{ subscription_info }}</p>
+{% endif %}
+
+
+
+{% endblock %}
