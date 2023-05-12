@@ -11,7 +11,7 @@ from tourtracker_app import db
 from tourtracker_app.strava_api_auth.strava_api_utilities import get_individual_strava_activity
 from datetime import datetime
 
-
+#FIXME does the subscribe endpoint need a @login_required decorator as well?
 @bp.route('/subscribe')
 async def create_webhook_subscription():
     payload = dict(client_id=current_app.config['STRAVA_CLIENT_ID'], 
