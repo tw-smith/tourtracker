@@ -83,6 +83,8 @@ def create_tour():
         if current_user.strava_athlete_id is not None:  # TODO probably a better/more robust way to do this
             strava_authenticated = True
         else:
+            # FIXME is this code even reachable if we don't show create tour button
+            # FIXME on user profile template? Guess user could follow direct URL
             strava_authenticated = False
         return render_template('create_tour.html',
                                strava_authenticated=strava_authenticated,

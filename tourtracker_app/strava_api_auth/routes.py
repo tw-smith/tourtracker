@@ -19,7 +19,6 @@ def strava_token_request(grant_type, code=None, refresh_token=None):
 @bp.route('/strava') # TODO check scope and behaviour on access denied
 def strava_auth():
     strava_base_url = 'https://www.strava.com/oauth/authorize'
-    print(current_app.config['STRAVA_REDIRECT_URL'])
     params = dict(client_id=current_app.config['STRAVA_CLIENT_ID'], response_type='code', redirect_uri=current_app.config['STRAVA_REDIRECT_URL'], scope=current_app.config['STRAVA_SCOPE'])
     redirect_url = strava_base_url + ("?" + urlencode(params) if params else "")
     return redirect(redirect_url)
@@ -42,7 +41,6 @@ def strava_deauth():
     if response.status_code == 401:
         flash('Strava deauthorisation not authorised')
     return redirect(url_for('main.user_profile'))
-
 
 
 @bp.route('/token_exchange')

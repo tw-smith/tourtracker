@@ -3,15 +3,21 @@ os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
 
 import pytest
 import unittest
-from flask import current_app
+from unittest.mock import Mock, patch
+from flask import current_app, render_template, make_response
+from requests.models import Response
 from tourtracker_app import create_app, db
 from tourtracker_app.models.auth_models import User
+from tourtracker_app.email import send_email
+from tourtracker_app.strava_api_auth.strava_api_utilities import get_strava_activities, get_individual_strava_activity
+from tourtracker_app.strava_api_auth.routes import token_service
 
 
 class TestTourTracker(unittest.TestCase):
     def setUp(self):
         self.app = create_app()
         self.app.config['WTF_CSRF_ENABLED'] = False
+        self.app.config['TESTING'] = True
         self.appctx = self.app.app_context()
         self.appctx.push()
         db.create_all()
@@ -39,6 +45,14 @@ class TestTourTracker(unittest.TestCase):
         )
         db.session.add(non_verified_user)
 
+        strava_verified_user = User(
+            email='strava@test.com',
+            password='testtest'
+        )
+        strava_verified_user.verified = True
+        strava_verified_user.strava_athlete_id = '1234'
+        db.session.add(strava_verified_user)
+
         admin_user = User(
             email='admin@test.com',
             password='admin_password'
@@ -49,11 +63,17 @@ class TestTourTracker(unittest.TestCase):
 
         db.session.commit()
 
-    def login(self):
-        self.client.post('/auth/login', data={
-            'email': 'test@test.com',
-            'password': 'testtest'
-        })
+    # def login(self):
+    #     self.client.post('/auth/login', data={
+    #         'email': 'test@test.com',
+    #         'password': 'testtest'
+    #     })
+
+    # def login_strava_user(self):
+    #     self.client.post('/auth/login', data={
+    #         'email': 'strava@test.com',
+    #         'password': 'testtest'
+    #     })
 
     def test_app(self):
         assert self.app is not None
@@ -88,26 +108,30 @@ class TestTourTracker(unittest.TestCase):
             'password': password,
         }, follow_redirects=True)
 
-    def login(self):
-        self.client.post('/auth/login', data={
-            'email': 'test@test.com',
-            'password': 'testtest',
-        })
+    def logout_helper(self):
+        return self.client.get('/auth/logout', follow_redirects=True)
 
-    def login_admin(self):
-        self.client.post('/auth/login', data={
-            'email': 'admin@test.com',
-            'password': 'admin_password'
-        })
+    # def login(self):
+    #     self.client.post('/auth/login', data={
+    #         'email': 'test@test.com',
+    #         'password': 'testtest',
+    #     })
+
+    # def login_admin(self):
+    #     self.client.post('/auth/login', data={
+    #         'email': 'admin@test.com',
+    #         'password': 'admin_password'
+    #     })
 
     def test_login(self):
         response = self.login_helper('test@test.com', 'testtest')
         assert response.status_code == 200
         html = response.get_data(as_text=True)
         assert 'test@test.com' in html
+        self.logout_helper()
 
     def test_logout(self):
-        self.login()
+        self.login_helper('test@test.com', 'testtest')
         response = self.client.get('auth/logout', follow_redirects=True)
         assert response.request.path == '/index'
         # TODO is there a way to check we are ACTUALLY logged out?
@@ -153,6 +177,37 @@ class TestTourTracker(unittest.TestCase):
         decoded_token = jwt_user.decode_token(token)
         assert decoded_token['uuid'] == jwt_user.uuid
         assert decoded_token['iss'] == self.app.config['JWT_ISSUER']
+
+    # def test_validation_email_content(self):
+    #     jwt_user = User(
+    #         email='jwt@test.com',
+    #         password='testpassword'
+    #     )
+    #     db.session.add(jwt_user)
+    #     db.session.commit()
+    #     token = jwt_user.create_token()
+    #     msg = send_email(self.app.config['APP_TITLE'] + ': Verify your email',
+    #                sender=self.app.config['MAIL_DEFAULT_SENDER'],
+    #                recipients=[jwt_user.email],
+    #                text_body=render_template('email/user_validation.txt', user=jwt_user, token=token),
+    #                html_body=render_template('email/user_validation.html', user=jwt_user, token=token))
+    #
+    #     assert msg.sender == self.app.config['MAIL_DEFAULT_SENDER']
+    #     assert msg.recipients == jwt_user.email
+    #     assert self.app.config['APP_TITLE'] in msg.subject
+    #     assert 'Verify your email' in msg.subject
+    #     assert jwt_user.email in msg.html
+    #     assert 'To validate your email' in msg.html
+    #     assert token in msg.html
+    #     assert 'Click here' in msg.html
+    #     assert jwt_user.email in msg.body
+    #     assert 'To validate your email' in msg.body
+    #     assert token in msg.body
+    #     assert 'Click here' in msg.body
+
+
+
+
 
     def test_register_email_validation(self):
         jwt_user = User(
@@ -275,10 +330,106 @@ class TestTourTracker(unittest.TestCase):
         assert 'Password reset. Please log in' in post_html
 
     def test_admin_user_profile_page(self):
-        self.login_admin()
+        self.login_helper('admin@test.com', 'admin_password')
         response = self.client.get('/index', follow_redirects=True)
         html = response.get_data(as_text=True)
         assert 'Webhook Admin' in html
+        self.logout_helper()
+
+    # Test Strava API Utilities
+    def test_strava_auth(self):
+        expected_url = 'https://www.strava.com/oauth/authorize?client_id=101417&response_type=code&redirect_uri=https%3A%2F%2Ftourtracker.tw-smith.me%2Fstrava%2Ftoken_exchange&scope=activity%3Aread'
+        response = self.client.get('/strava/strava')
+        assert response.location == expected_url
+
+
+    @patch('tourtracker_app.strava_api_auth.routes.requests.post')
+    def test_strava_token_exchange(self, mock_response):
+        response_body = {
+            'athlete': {
+                'id': '1002'
+            },
+            'access_token': 'mock_access_token',
+            'refresh_token': 'mock_refresh_token',
+            'expires_at': '123456789'
+        }
+
+        r = Mock(spec=Response)
+        r.json.return_value = response_body
+        r.status_code = 200
+        mock_response.return_value = r
+
+        user = User(email='strava_token@test.com',
+                    password='test_password')
+        user.verified = True
+        db.session.add(user)
+        db.session.commit()
+        self.login_helper('strava_token@test.com', 'test_password')
+        response = self.client.get('/strava/token_exchange?code=dummycode', follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(user.strava_athlete_id, 1002)
+        self.assertEqual(user.strava_access_token[0].access_token, 'mock_access_token')
+        self.assertEqual(user.strava_access_token[0].expires_at, 123456789)
+        self.assertEqual(user.strava_refresh_token[0].refresh_token, 'mock_refresh_token')
+        self.assertEqual(response.request.path, '/profile')
+        self.logout_helper()
+        db.session.delete(user)
+        db.session.commit()
+
+    @patch('tourtracker_app.strava_api_auth.routes.requests.post')
+    def test_strava_token_exchange_existing_athlete(self, mock_response):
+        response_body = {
+            'athlete': {
+                'id': '1003'
+            },
+            'access_token': 'mock_access_token',
+            'refresh_token': 'mock_refresh_token',
+            'expires_at': '123456789'
+        }
+        r = Mock(spec=Response)
+        r.json.return_value = response_body
+        r.status_code = 200
+        mock_response.return_value = r
+
+        user = User(email='strava_token_existing@test.com',
+                    password='test_password')
+        user.verified = True
+        user.strava_athlete_id = 1003
+        db.session.add(user)
+        db.session.commit()
+        self.login_helper('strava_token_existing@test.com', 'test_password')
+        response = self.client.get('/strava/token_exchange?code=dummycode', follow_redirects=True)
+        self.assertIn('already in our database', response.data.decode())
+        self.assertEqual(response.request.path, '/profile')
+
+        self.logout_helper()
+        db.session.delete(user)
+        db.session.commit()
+
+
+
+
+
+    # Test tour CRUD functions
+    def test_create_tour_form(self):
+        self.login_helper('strava@test.com', 'testtest')
+        response = self.client.get('/createtour', follow_redirects=True)
+        html = response.get_data(as_text=True)
+        assert 'name="tour_name"' in html
+        assert 'name="start_date"' in html
+        assert 'name="end_date"' in html
+        assert 'name="submit"' in html
+        self.logout_helper()
+
+    # def test_create_tour(self):
+    #     self.login_helper('strava@test.com', 'testtest')
+    #     data = {
+    #         'tour_name': 'Test Tour Name',
+    #         'start_date': '1/5/23',
+    #         'end_date': '5/5/23',
+    #     }
+    #     response = self.client.post('/createtour', data=data, follow_redirects=True)
+        #TODO this is now going to call get_strava_activities and strava API so we need to mock response
 
 
 
