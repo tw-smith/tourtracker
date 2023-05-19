@@ -1,16 +1,17 @@
+# import datetime
+from datetime import datetime, timedelta
 import os
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
 
-import pytest
 import unittest
 from unittest.mock import Mock, patch
-from flask import current_app, render_template, make_response
+from flask import current_app
+from flask_login import current_user
 from requests.models import Response
 from tourtracker_app import create_app, db
 from tourtracker_app.models.auth_models import User
 from tourtracker_app.email import send_email
 from tourtracker_app.strava_api_auth.strava_api_utilities import get_strava_activities, get_individual_strava_activity
-from tourtracker_app.strava_api_auth.routes import token_service
 
 
 class TestTourTracker(unittest.TestCase):
@@ -20,8 +21,10 @@ class TestTourTracker(unittest.TestCase):
         self.app.config['TESTING'] = True
         self.appctx = self.app.app_context()
         self.appctx.push()
+        db.drop_all()
         db.create_all()
         self.populate_db()
+        self.base_user = db.session.execute(db.select(User).filter_by(id=1)).first()
         self.client = self.app.test_client()
 
     def tearDown(self):
@@ -34,46 +37,11 @@ class TestTourTracker(unittest.TestCase):
     def populate_db(self):
         user = User(
             email='test@test.com',
-            password='testtest',
+            password='test_password',
         )
         user.verified = True
         db.session.add(user)
-
-        non_verified_user = User(
-            email='nonverified@test.com',
-            password='testtest',
-        )
-        db.session.add(non_verified_user)
-
-        strava_verified_user = User(
-            email='strava@test.com',
-            password='testtest'
-        )
-        strava_verified_user.verified = True
-        strava_verified_user.strava_athlete_id = '1234'
-        db.session.add(strava_verified_user)
-
-        admin_user = User(
-            email='admin@test.com',
-            password='admin_password'
-        )
-        admin_user.isadmin = True
-        admin_user.verified = True
-        db.session.add(admin_user)
-
         db.session.commit()
-
-    # def login(self):
-    #     self.client.post('/auth/login', data={
-    #         'email': 'test@test.com',
-    #         'password': 'testtest'
-    #     })
-
-    # def login_strava_user(self):
-    #     self.client.post('/auth/login', data={
-    #         'email': 'strava@test.com',
-    #         'password': 'testtest'
-    #     })
 
     def test_app(self):
         assert self.app is not None
@@ -111,27 +79,15 @@ class TestTourTracker(unittest.TestCase):
     def logout_helper(self):
         return self.client.get('/auth/logout', follow_redirects=True)
 
-    # def login(self):
-    #     self.client.post('/auth/login', data={
-    #         'email': 'test@test.com',
-    #         'password': 'testtest',
-    #     })
-
-    # def login_admin(self):
-    #     self.client.post('/auth/login', data={
-    #         'email': 'admin@test.com',
-    #         'password': 'admin_password'
-    #     })
-
     def test_login(self):
-        response = self.login_helper('test@test.com', 'testtest')
+        response = self.login_helper('test@test.com', 'test_password')
         assert response.status_code == 200
         html = response.get_data(as_text=True)
         assert 'test@test.com' in html
         self.logout_helper()
 
     def test_logout(self):
-        self.login_helper('test@test.com', 'testtest')
+        self.login_helper('test@test.com', 'test_password')
         response = self.client.get('auth/logout', follow_redirects=True)
         assert response.request.path == '/index'
         # TODO is there a way to check we are ACTUALLY logged out?
@@ -151,7 +107,9 @@ class TestTourTracker(unittest.TestCase):
         assert response.request.path == '/auth/login'
 
     def test_login_non_verified_user(self):
-        response = self.login_helper('nonverified@test.com', 'testtest')
+        self.base_user[0].verified = False
+        db.session.commit()
+        response = self.login_helper('test@test.com', 'test_password')
         assert response.status_code == 200
         html = response.get_data(as_text=True)
         assert 'Please verify your email address' in html
@@ -161,88 +119,40 @@ class TestTourTracker(unittest.TestCase):
         response = self.client.get('/auth/signup')
         assert response.status_code == 200
         html = response.get_data(as_text=True)
-
-        # Check all signup fields are in HTML
         assert 'name="email"' in html
         assert 'name="password"' in html
         assert 'name="repeat_pw"' in html
         assert 'name="submit"' in html
 
     def test_jwt_encode_decode(self):
-        jwt_user = User(
-            email='jwt@test.com',
-            password='testpassword'
-        )
-        token = jwt_user.create_token()
-        decoded_token = jwt_user.decode_token(token)
-        assert decoded_token['uuid'] == jwt_user.uuid
+        token = self.base_user[0].create_token()
+        decoded_token = self.base_user[0].decode_token(token)
+        assert decoded_token['uuid'] == self.base_user[0].uuid
         assert decoded_token['iss'] == self.app.config['JWT_ISSUER']
 
-    # def test_validation_email_content(self):
-    #     jwt_user = User(
-    #         email='jwt@test.com',
-    #         password='testpassword'
-    #     )
-    #     db.session.add(jwt_user)
-    #     db.session.commit()
-    #     token = jwt_user.create_token()
-    #     msg = send_email(self.app.config['APP_TITLE'] + ': Verify your email',
-    #                sender=self.app.config['MAIL_DEFAULT_SENDER'],
-    #                recipients=[jwt_user.email],
-    #                text_body=render_template('email/user_validation.txt', user=jwt_user, token=token),
-    #                html_body=render_template('email/user_validation.html', user=jwt_user, token=token))
-    #
-    #     assert msg.sender == self.app.config['MAIL_DEFAULT_SENDER']
-    #     assert msg.recipients == jwt_user.email
-    #     assert self.app.config['APP_TITLE'] in msg.subject
-    #     assert 'Verify your email' in msg.subject
-    #     assert jwt_user.email in msg.html
-    #     assert 'To validate your email' in msg.html
-    #     assert token in msg.html
-    #     assert 'Click here' in msg.html
-    #     assert jwt_user.email in msg.body
-    #     assert 'To validate your email' in msg.body
-    #     assert token in msg.body
-    #     assert 'Click here' in msg.body
-
-
-
-
-
     def test_register_email_validation(self):
-        jwt_user = User(
-            email='jwt@test.com',
-            password='testpassword'
-        )
-        db.session.add(jwt_user)
+        self.base_user[0].verified = False
         db.session.commit()
-        token = jwt_user.create_token()
+        self.assertFalse(self.base_user[0].verified)
+        token = self.base_user[0].create_token()
         response = self.client.get('/auth/verify/' + token, follow_redirects=True)
         html = response.data.decode()
         assert response.status_code == 200
         assert 'Signup successful' in html
         assert response.request.path == '/auth/login'
-        assert jwt_user.verified is True
-        db.session.delete(jwt_user)
-        db.session.commit()
+        assert self.base_user[0].verified is True
 
     def test_register_email_validation_bad_token(self):
-        jwt_user = User(
-            email='jwt@test.com',
-            password='testpassword'
-        )
-        db.session.add(jwt_user)
+        self.base_user[0].verified = False
         db.session.commit()
-        token = jwt_user.create_token()
-        bad_token = 'junktoken'
+        self.assertFalse(self.base_user[0].verified)
+        bad_token = 'bad_token'
         response = self.client.get('/auth/verify/' + bad_token, follow_redirects=True)
         html = response.data.decode()
         assert response.status_code == 200
         assert 'Verification error' in html
         assert response.request.path == '/auth/signup'
-        assert jwt_user.verified is False
-        db.session.delete(jwt_user)
-        db.session.commit()
+        assert self.base_user[0].verified is False
 
     def test_register_user(self):
         data = {
@@ -257,7 +167,7 @@ class TestTourTracker(unittest.TestCase):
 
     def test_register_user_already_exists(self):
         data = {
-            'email': 'test@test.com',
+            'email': self.base_user[0].email,
             'password': 'test_password',
             'repeat_pw': 'test_password',
         }
@@ -304,14 +214,7 @@ class TestTourTracker(unittest.TestCase):
         assert response.request.path == '/auth/login'
 
     def test_reset_password(self):
-        jwt_user = User(
-            email='jwt@test.com',
-            password='testpassword'
-        )
-        db.session.add(jwt_user)
-        jwt_user.verified = True
-        db.session.commit()
-        token = jwt_user.create_token()
+        token = self.base_user[0].create_token()
         response = self.client.get('/auth/resetpassword/' + token, follow_redirects=True)
         assert response.status_code == 200
         html = response.data.decode()
@@ -325,12 +228,14 @@ class TestTourTracker(unittest.TestCase):
         }, follow_redirects=True)
         assert post_response.status_code == 200
         assert post_response.request.path == '/auth/login'
-        assert jwt_user.check_password('new_password') is True
+        assert self.base_user[0].check_password('new_password') is True
         post_html = post_response.data.decode()
         assert 'Password reset. Please log in' in post_html
 
     def test_admin_user_profile_page(self):
-        self.login_helper('admin@test.com', 'admin_password')
+        self.base_user[0].isadmin = True
+        db.session.commit()
+        self.login_helper(self.base_user[0].email, 'test_password')
         response = self.client.get('/index', follow_redirects=True)
         html = response.get_data(as_text=True)
         assert 'Webhook Admin' in html
@@ -343,6 +248,32 @@ class TestTourTracker(unittest.TestCase):
         assert response.location == expected_url
 
 
+    # def create_authenticated_strava_user(self):
+    #     from tourtracker_app.models.strava_api_models import StravaAccessToken, StravaRefreshToken
+    #     user = User(email='strava_token@test.com',
+    #                 password='test_password')
+    #     user.verified = True
+    #     user.strava_athlete_id = 1236
+    #     db.session.add(user)
+    #
+    #     expires_at = int(round((datetime.now() + timedelta(days=3)).timestamp()))
+    #     strava_access_token = StravaAccessToken(
+    #         athlete_id=user.strava_athlete_id,
+    #         access_token='dummyaccesstoken',
+    #         expires_at=expires_at
+    #     )
+    #     db.session.add(strava_access_token)
+    #
+    #     strava_refresh_token = StravaRefreshToken(
+    #         athlete_id=user.strava_athlete_id,
+    #         refresh_token='dummyrefreshtoken'
+    #     )
+    #     db.session.add(strava_refresh_token)
+    #     db.session.commit()
+    #     return user
+
+
+
     @patch('tourtracker_app.strava_api_auth.routes.requests.post')
     def test_strava_token_exchange(self, mock_response):
         response_body = {
@@ -353,28 +284,19 @@ class TestTourTracker(unittest.TestCase):
             'refresh_token': 'mock_refresh_token',
             'expires_at': '123456789'
         }
-
         r = Mock(spec=Response)
         r.json.return_value = response_body
         r.status_code = 200
         mock_response.return_value = r
-
-        user = User(email='strava_token@test.com',
-                    password='test_password')
-        user.verified = True
-        db.session.add(user)
-        db.session.commit()
-        self.login_helper('strava_token@test.com', 'test_password')
+        self.login_helper(self.base_user[0].email, 'test_password')
         response = self.client.get('/strava/token_exchange?code=dummycode', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(user.strava_athlete_id, 1002)
-        self.assertEqual(user.strava_access_token[0].access_token, 'mock_access_token')
-        self.assertEqual(user.strava_access_token[0].expires_at, 123456789)
-        self.assertEqual(user.strava_refresh_token[0].refresh_token, 'mock_refresh_token')
+        self.assertEqual(self.base_user[0].strava_athlete_id, 1002)
+        self.assertEqual(self.base_user[0].strava_access_token[0].access_token, 'mock_access_token')
+        self.assertEqual(self.base_user[0].strava_access_token[0].expires_at, 123456789)
+        self.assertEqual(self.base_user[0].strava_refresh_token[0].refresh_token, 'mock_refresh_token')
         self.assertEqual(response.request.path, '/profile')
         self.logout_helper()
-        db.session.delete(user)
-        db.session.commit()
 
     @patch('tourtracker_app.strava_api_auth.routes.requests.post')
     def test_strava_token_exchange_existing_athlete(self, mock_response):
@@ -386,33 +308,59 @@ class TestTourTracker(unittest.TestCase):
             'refresh_token': 'mock_refresh_token',
             'expires_at': '123456789'
         }
+        # https://stackoverflow.com/questions/40361308/create-a-functioning-response-object
         r = Mock(spec=Response)
         r.json.return_value = response_body
         r.status_code = 200
         mock_response.return_value = r
-
-        user = User(email='strava_token_existing@test.com',
-                    password='test_password')
-        user.verified = True
-        user.strava_athlete_id = 1003
-        db.session.add(user)
+        self.base_user[0].strava_athlete_id = 1003
         db.session.commit()
-        self.login_helper('strava_token_existing@test.com', 'test_password')
+        self.login_helper(self.base_user[0].email, 'test_password')
         response = self.client.get('/strava/token_exchange?code=dummycode', follow_redirects=True)
         self.assertIn('already in our database', response.data.decode())
         self.assertEqual(response.request.path, '/profile')
-
         self.logout_helper()
-        db.session.delete(user)
+
+
+    @patch('tourtracker_app.strava_api_auth.routes.requests.post')
+    def test_strava_deauth(self, mock_response):
+        from tourtracker_app.models.strava_api_models import StravaAccessToken, StravaRefreshToken
+        r = Mock(spec=Response)
+        r.status_code = 200
+        mock_response.return_value = r
+        self.base_user[0].strava_athlete_id = 1002
+        expires_at = int(round((datetime.now() + timedelta(days=3)).timestamp()))
+        strava_access_token = StravaAccessToken(
+            athlete_id=1002,
+            access_token='dummy_access_token',
+            expires_at=expires_at
+        )
+        db.session.add(strava_access_token)
+        strava_refresh_token = StravaRefreshToken(
+            athlete_id=1002,
+            refresh_token='dummy_refresh_token'
+        )
+        db.session.add(strava_refresh_token)
         db.session.commit()
-
-
-
+        self.assertEqual(self.base_user[0].strava_access_token[0].access_token, 'dummy_access_token')
+        self.assertEqual(self.base_user[0].strava_refresh_token[0].refresh_token, 'dummy_refresh_token')
+        self.login_helper(self.base_user[0].email, 'test_password')
+        response = self.client.get('/strava/strava_deauth', follow_redirects=True)
+        strava_access_token = db.session.execute(db.select(StravaAccessToken).filter_by(athlete_id=1002)).first()
+        strava_refresh_token = db.session.execute(db.Select(StravaRefreshToken).filter_by(athlete_id=1002)).first()
+        self.assertEqual(strava_access_token, None)
+        self.assertEqual(strava_refresh_token, None)
+        self.assertEqual(self.base_user[0].strava_athlete_id, None)
+        self.assertEqual(response.request.path, '/profile')
+        self.assertIn('Strava deauthorisation successful', response.data.decode())
+        self.logout_helper()
 
 
     # Test tour CRUD functions
     def test_create_tour_form(self):
-        self.login_helper('strava@test.com', 'testtest')
+        self.base_user[0].strava_athlete_id = 1003
+        db.session.commit()
+        self.login_helper(self.base_user[0].email, 'test_password')
         response = self.client.get('/createtour', follow_redirects=True)
         html = response.get_data(as_text=True)
         assert 'name="tour_name"' in html

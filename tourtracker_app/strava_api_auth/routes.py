@@ -31,12 +31,12 @@ def strava_deauth():
     params = dict(access_token=current_user.strava_access_token[0].access_token)
     deauth_url = strava_base_url + ("?" + urlencode(params) if params else "")
     response = requests.post(deauth_url)
-    print(response.json())
     if response.status_code == 200:
-        db.session.delete(current_user.strava_access_token)
-        db.session.delete(current_user.strava_refresh_token)
-        db.session.commit()
+        db.session.delete(current_user.strava_access_token[0])
+        db.session.delete(current_user.strava_refresh_token[0])
         current_user.strava_athlete_id = None
+        db.session.commit()
+
         flash('Strava deauthorisation successful!')
     if response.status_code == 401:
         flash('Strava deauthorisation not authorised')
