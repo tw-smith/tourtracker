@@ -7,13 +7,13 @@ import polyline
 
 def handle_strava_api_response(response):
     from tourtracker_app.strava_api_auth.error_handlers import StravaBadRequestException
-    # print(response)
     if response:
         response_json = response.json()
         if response.ok:
             return response_json
         else:
             if response.status_code == 400 or response.status_code == 401:
+                print('in error branch')
                 raise StravaBadRequestException(response_json['message'])
             if response.status_code == 429:
                 raise StravaBadRequestException(response_json['message'])
@@ -36,19 +36,23 @@ def get_individual_strava_activity(user, activity_id):
     full_url = base_url + '/' + str(activity_id)
     response = handle_strava_api_response(requests.get(full_url, headers=headers))
     return response
+    # FIXME this returns activity_name as the key whereas get_strava_activities modifies it to be activity_name
 
 
 def get_strava_activities(user, start_timestamp, end_timestamp):
+    allowed_sport_types = [
+        'Ride',
+        'EBikeRide'
+    ]
     base_url = 'https://www.strava.com/api/v3/athlete/activities'
     headers = strava_request_header_prep(user)
     params = dict(before=end_timestamp, after=start_timestamp, page=1, per_page=30)
     activities = []
     full_url = base_url + ("?" + urlencode(params) if params else "")
-    print(full_url)
-    print(headers)
     response = handle_strava_api_response(requests.get(full_url, headers=headers))
     for activity in response:
-        if activity['sport_type'] != 'Ride':
+        print(activity['type'])
+        if activity['type'] not in allowed_sport_types:
             continue
         latlong = []
         points = polyline.decode(activity['map']['summary_polyline'])

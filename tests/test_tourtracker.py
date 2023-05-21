@@ -1,5 +1,5 @@
 # import datetime
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, MINYEAR, MAXYEAR
 import os
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
 
@@ -11,7 +11,8 @@ from requests.models import Response
 from tourtracker_app import create_app, db
 from tourtracker_app.models.auth_models import User
 from tourtracker_app.email import send_email
-from tourtracker_app.strava_api_auth.strava_api_utilities import get_strava_activities, get_individual_strava_activity
+from tourtracker_app.strava_api_auth.strava_api_utilities import get_strava_activities, get_individual_strava_activity, handle_strava_api_response, strava_request_header_prep
+from tourtracker_app.strava_api_auth.error_handlers import StravaBadRequestException
 
 
 class TestTourTracker(unittest.TestCase):
@@ -368,6 +369,219 @@ class TestTourTracker(unittest.TestCase):
         assert 'name="end_date"' in html
         assert 'name="submit"' in html
         self.logout_helper()
+
+    def test_handle_strava_api_response_ok(self):
+        response_body = {
+            'message': 'test response body'
+        }
+        mock_response = Mock(spec=Response)
+        mock_response.status_code = 200
+        mock_response.json.return_value = response_body
+        result = handle_strava_api_response(mock_response)
+        self.assertEqual(result['message'], 'test response body')
+
+    def test_handle_strava_api_response_bad_request(self):
+        response_body = {
+            'message': 'bad request'
+        }
+        mock_response = Mock(spec=Response)
+        mock_response.json.return_value = response_body
+        mock_response.ok = False
+        mock_response.status_code = 400
+        self.assertRaises(StravaBadRequestException, handle_strava_api_response, mock_response)
+        mock_response.status_code = 401
+        self.assertRaises(StravaBadRequestException, handle_strava_api_response, mock_response)
+        mock_response.status_code = 429
+        self.assertRaises(StravaBadRequestException, handle_strava_api_response, mock_response)
+
+
+    def test_strava_request_header_prep(self):
+        from tourtracker_app.models.strava_api_models import StravaAccessToken
+        self.base_user[0].strava_athlete_id = 1002
+        expires_at = int(round((datetime.now() + timedelta(days=3)).timestamp()))
+        strava_access_token = StravaAccessToken(
+            athlete_id=1002,
+            access_token='dummy_access_token',
+            expires_at=expires_at
+        )
+        db.session.add(strava_access_token)
+        db.session.commit()
+        headers = strava_request_header_prep(self.base_user[0])
+        self.assertIn('Bearer ', headers['Authorization'])
+        self.assertIn(strava_access_token.access_token, headers['Authorization'])
+
+
+    @patch('tourtracker_app.strava_api_auth.strava_api_utilities.requests.get')
+    def test_get_strava_activities(self, mock_response):
+        from tourtracker_app.models.strava_api_models import StravaAccessToken
+        response_body = [
+                {
+                    "resource_state": 2,
+                    "athlete": {
+                        "id": 134815,
+                        "resource_state": 1
+                    },
+                    "name": "Happy Friday",
+                    "distance": 24931.4,
+                    "moving_time": 4500,
+                    "elapsed_time": 4500,
+                    "total_elevation_gain": 0,
+                    "type": "Ride",
+                    "sport_type": "MountainBikeRide",
+                    "workout_type": None,
+                    "id": 154504250376823,
+                    "start_date": "2018-05-02T12:15:09Z",
+                    "start_date_local": "2018-05-02T05:15:09Z",
+                    "timezone": "(GMT-08:00) America/Los_Angeles",
+                    "utc_offset": -25200,
+                    "map": {
+                        "id": "a12345678987654321",
+                        "summary_polyline": 'iiv_Gbk|wOrnh@o{p@bb_Ahg`@_hZr{ZwcbA~}[',
+                        "resource_state": 2
+                    },
+                    "trainer": False,
+                    "commute": False,
+                    "manual": False,
+                    "private": False,
+                    "flagged": False,
+                    "max_speed": 11,
+                },
+                {
+                    "resource_state": 2,
+                    "athlete": {
+                        "id": 167560,
+                        "resource_state": 1
+                    },
+                    "name": "Bondcliff",
+                    "distance": 23676.5,
+                    "moving_time": 5400,
+                    "elapsed_time": 5400,
+                    "total_elevation_gain": 0,
+                    "type": "Ride",
+                    "sport_type": "MountainBikeRide",
+                    "workout_type": None,
+                    "id": 1234567809,
+                    "start_date": "2018-04-30T12:35:51Z",
+                    "start_date_local": "2018-04-30T05:35:51Z",
+                    "timezone": "(GMT-08:00) America/Los_Angeles",
+                    "utc_offset": -25200,
+                    "map": {
+                        "id": "a12345689",
+                        "summary_polyline": 'iiv_Gbk|wOrnh@o{p@bb_Ahg`@_hZr{ZwcbA~}[',
+                        "resource_state": 2
+                    },
+                    "trainer": False,
+                    "commute": False,
+                    "manual": False,
+                    "private": False,
+                    "flagged": False,
+                    "max_speed": 8.8,
+                },
+                {
+                "resource_state": 2,
+                "athlete": {
+                    "id": 167560,
+                    "resource_state": 1
+                },
+                "name": "NotAllowed",
+                "distance": 23676.5,
+                "moving_time": 5400,
+                "elapsed_time": 5400,
+                "total_elevation_gain": 0,
+                "type": "Handcycle",
+                "sport_type": "MountainBikeRide",
+                "workout_type": None,
+                "id": 1234567810,
+                "start_date": "2018-04-30T12:35:51Z",
+                "start_date_local": "2018-04-30T05:35:51Z",
+                "timezone": "(GMT-08:00) America/Los_Angeles",
+                "utc_offset": -25200,
+                "map": {
+                    "id": "a12345689",
+                    "summary_polyline": 'iiv_Gbk|wOrnh@o{p@bb_Ahg`@_hZr{ZwcbA~}[',
+                    "resource_state": 2
+                },
+                "trainer": False,
+                "commute": False,
+                "manual": False,
+                "private": False,
+                "flagged": False,
+                "max_speed": 8.8,
+            }
+            ]
+        r = Mock(spec=Response)
+        r.json.return_value = response_body
+        r.status_code = 200
+        r.ok = True
+        mock_response.return_value = r
+        self.base_user[0].strava_athlete_id = 1002
+        expires_at = int(round((datetime.now() + timedelta(days=3)).timestamp()))
+        strava_access_token = StravaAccessToken(
+            athlete_id=1002,
+            access_token='dummy_access_token',
+            expires_at=expires_at
+        )
+        db.session.add(strava_access_token)
+        db.session.commit()
+        start_timestamp = int(round(datetime(year=1990, day=1, month=1).timestamp()))
+        end_timestamp = int(round(datetime(year=2050, day=1, month=1).timestamp()))
+        result = get_strava_activities(self.base_user[0], start_timestamp, end_timestamp)
+        self.assertEqual(result[0]['activity_name'], 'Happy Friday')
+        self.assertEqual(result[1]['activity_name'], 'Bondcliff')
+        self.assertEqual(len(result), 2) #Check handcycle activity skipped
+
+    @patch('tourtracker_app.strava_api_auth.strava_api_utilities.requests.get')
+    def test_get_individual_strava_activity(self, mock_response):
+        from tourtracker_app.models.strava_api_models import StravaAccessToken
+        response_body = [
+                {
+                    "resource_state": 2,
+                    "athlete": {
+                        "id": 134815,
+                        "resource_state": 1
+                    },
+                    "name": "Happy Friday",
+                    "distance": 24931.4,
+                    "moving_time": 4500,
+                    "elapsed_time": 4500,
+                    "total_elevation_gain": 0,
+                    "type": "Ride",
+                    "sport_type": "MountainBikeRide",
+                    "workout_type": None,
+                    "id": 154504250376823,
+                    "start_date": "2018-05-02T12:15:09Z",
+                    "start_date_local": "2018-05-02T05:15:09Z",
+                    "timezone": "(GMT-08:00) America/Los_Angeles",
+                    "utc_offset": -25200,
+                    "map": {
+                        "id": "a12345678987654321",
+                        "summary_polyline": 'iiv_Gbk|wOrnh@o{p@bb_Ahg`@_hZr{ZwcbA~}[',
+                        "resource_state": 2
+                    },
+                    "trainer": False,
+                    "commute": False,
+                    "manual": False,
+                    "private": False,
+                    "flagged": False,
+                    "max_speed": 11,
+                },
+            ]
+        r = Mock(spec=Response)
+        r.json.return_value = response_body
+        r.status_code = 200
+        r.ok = True
+        mock_response.return_value = r
+        self.base_user[0].strava_athlete_id = 1002
+        expires_at = int(round((datetime.now() + timedelta(days=3)).timestamp()))
+        strava_access_token = StravaAccessToken(
+            athlete_id=1002,
+            access_token='dummy_access_token',
+            expires_at=expires_at
+        )
+        db.session.add(strava_access_token)
+        db.session.commit()
+        result = get_individual_strava_activity(self.base_user[0], 154504250376823)
+        self.assertEqual(result[0]['name'], 'Happy Friday')
 
     # def test_create_tour(self):
     #     self.login_helper('strava@test.com', 'testtest')
