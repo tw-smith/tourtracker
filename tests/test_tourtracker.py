@@ -10,6 +10,7 @@ from flask_login import current_user
 from requests.models import Response
 from tourtracker_app import create_app, db
 from tourtracker_app.models.auth_models import User
+from tourtracker_app.models.tour_models import Tour, TourActivities
 from tourtracker_app.email import send_email
 from tourtracker_app.strava_api_auth.strava_api_utilities import get_strava_activities, get_individual_strava_activity, handle_strava_api_response, strava_request_header_prep
 from tourtracker_app.strava_api_auth.error_handlers import StravaBadRequestException
@@ -592,6 +593,98 @@ class TestTourTracker(unittest.TestCase):
     #     }
     #     response = self.client.post('/createtour', data=data, follow_redirects=True)
         #TODO this is now going to call get_strava_activities and strava API so we need to mock response
+
+
+
+    # Test Strava API models
+
+    def test_check_strava_access_token_valid(self):
+        from tourtracker_app.models.strava_api_models import StravaAccessToken
+        valid_access_token = StravaAccessToken(
+            athlete_id=1234,
+            access_token='dummy_access_token',
+            expires_at = int(round((datetime.now() + timedelta(days=3)).timestamp()))
+        )
+        expired_access_token = StravaAccessToken(
+            athlete_id=1235,
+            access_token='expired_dummy_access_token',
+            expires_at = int(round((datetime.now() - timedelta(days=3)).timestamp()))
+        )
+        self.assertTrue(valid_access_token.check_token_valid())
+        self.assertFalse(expired_access_token.check_token_valid())
+
+    @patch('tourtracker_app.models.strava_api_models.requests.post')
+    def test_refresh_strava_access_token(self, mock_response):
+        from tourtracker_app.models.strava_api_models import StravaAccessToken, StravaRefreshToken
+        response_body = {
+            'access_token': 'new_access_token',
+            'refresh_token': 'new_refresh_token',
+            'expires_at': str(int(round((datetime.now() + timedelta(days=3)).timestamp())))
+        }
+        r = Mock(spec=Response)
+        r.status_code = 200
+        r.ok = True
+        r.json.return_value = response_body
+        mock_response.return_value = r
+        self.base_user[0].strava_athlete_id = 1002
+        access_token = StravaAccessToken(
+            athlete_id=1002,
+            access_token='expired_dummy_access_token',
+            expires_at=int(round((datetime.now() - timedelta(days=3)).timestamp()))
+        )
+        refresh_token = StravaRefreshToken(
+            athlete_id=1002,
+            refresh_token='refresh_token'
+        )
+        db.session.add(access_token)
+        db.session.add(refresh_token)
+        db.session.commit()
+
+        self.base_user[0].strava_access_token[0].refresh_access_token(self.base_user[0].strava_refresh_token[0])
+        db.session.commit()
+        self.assertEqual(self.base_user[0].strava_access_token[0].access_token, 'new_access_token')
+        self.assertEqual(self.base_user[0].strava_refresh_token[0].refresh_token, 'new_refresh_token')
+
+    def test_model_as_dict(self):
+        from tourtracker_app.models.strava_api_models import StravaAccessToken
+        expires_at = int(round((datetime.now() + timedelta(days=3)).timestamp()))
+        valid_access_token = StravaAccessToken(
+            athlete_id=1234,
+            access_token='dummy_access_token',
+            expires_at = expires_at
+        )
+        expected = {
+            'id': None,
+            'athlete_id': 1234,
+            'access_token': 'dummy_access_token',
+            'expires_at': expires_at
+        }
+
+        result = valid_access_token.as_dict()
+        self.assertEqual(expected, result)
+
+    def test_tour_model_inits(self):
+        tour = Tour('test_tour_name', 'test_start_date', 'test_end_date', 'test_user_id')
+        self.assertEqual(tour.tour_name, 'test_tour_name')
+        self.assertEqual(tour.start_date, 'test_start_date')
+        self.assertEqual(tour.end_date, 'test_end_date')
+        self.assertEqual(tour.user_id, 'test_user_id')
+        self.assertIsInstance(tour.tour_uuid, str)
+
+        tour_activities = TourActivities(
+            1234,
+            'test_activity_name',
+            'test_activity_date',
+            'polyline',
+            'parent_tour',
+            'user_id')
+
+        self.assertEqual(tour_activities.strava_activity_id, 1234)
+        self.assertEqual(tour_activities.activity_name, 'test_activity_name')
+        self.assertEqual(tour_activities.activity_date, 'test_activity_date')
+        self.assertEqual(tour_activities.summary_polyline, 'polyline')
+
+
 
 
 
