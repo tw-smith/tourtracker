@@ -77,7 +77,7 @@ def validate_user(token):
         return redirect(url_for('auth.signup'))
     user[0].verified = True
     db.session.commit()
-    flash('Signup succesful! Please log in.')
+    flash('Signup successful! Please log in.')
     return redirect(url_for('auth.login'))
 
 
@@ -97,15 +97,27 @@ def request_password_reset():
 
 @bp.route('/resetpassword/<token>', methods=['GET', 'POST'])
 def reset_password(token):
-    try:
-        user = User.verify_user_verification_token(token)
-    except:
-        flash('Password reset error. Please try again')
-        return redirect(url_for('auth.request_password_reset'))
     form = PasswordResetForm()
-    if form.validate_on_submit():
-        user[0].set_password(form.password.data)
-        db.session.commit()
-        flash('Password reset. Please log in')
-        return redirect(url_for('auth.login'))
-    return render_template('resetpassword.html', form=form)
+    if request.method == 'GET':
+        try:
+            user = User.verify_user_verification_token(token)
+            return render_template('resetpassword.html', form=form)
+        except:
+            flash('Password reset error. Please try again')
+            return redirect(url_for('auth.request_password_reset'))
+    if request.method == 'POST':
+        try:
+            user = User.verify_user_verification_token(token)
+
+            if form.validate_on_submit():
+                user[0].set_password(form.password.data)
+                db.session.commit()
+                flash('Password reset. Please log in')
+                return redirect(url_for('auth.login'))
+        except:
+            flash('Password reset error. Please try again')
+            return redirect(url_for('auth.request_password_reset'))
+
+
+
+
