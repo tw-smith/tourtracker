@@ -19,12 +19,16 @@ async def create_webhook_subscription():
                    callback_url=current_app.config['STRAVA_WEBHOOK_CALLBACK_URL'], 
                    verify_token=current_app.config['STRAVA_WEBHOOK_VERIFY_TOKEN'])
     base_url = current_app.config['STRAVA_WEBHOOK_BASE_URL']
-    response = requests.post(base_url, data=payload).json()
-    strava_webhook_subscription = StravaWebhookSubscription(
-        subscription_id=response['id']
-    )
-    db.session.add(strava_webhook_subscription)
-    db.session.commit()
+    response = requests.post(base_url, data=payload)
+    if response.ok:
+        response_json = response.json()
+        strava_webhook_subscription = StravaWebhookSubscription(
+            subscription_id=response_json['id']
+        )
+        db.session.add(strava_webhook_subscription)
+        db.session.commit()
+    else:
+        flash('Webhook subscription error!')
     return redirect(url_for('strava_webhook.webhook_admin'))
 
 
