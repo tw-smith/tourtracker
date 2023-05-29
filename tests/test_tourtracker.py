@@ -5,6 +5,7 @@ import os
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
 
 import unittest
+from urllib.parse import urlencode
 from unittest.mock import Mock, patch
 from flask import current_app
 from flask_login import current_user
@@ -15,7 +16,9 @@ from tourtracker_app.models.tour_models import Tour, TourActivities
 from tourtracker_app.email import send_email
 from tourtracker_app.strava_api_auth.strava_api_utilities import get_strava_activities, get_individual_strava_activity, \
     handle_strava_api_response, strava_request_header_prep
+from tourtracker_app.strava_webhook.routes import check_tour_date_range, check_activity_exists
 from tourtracker_app.strava_api_auth.error_handlers import StravaBadRequestException
+
 from test_utilities import login_helper, logout_helper
 
 
@@ -69,8 +72,7 @@ class TestTourTracker(unittest.TestCase):
 
     def return_example_strava_activities(self, one_or_multiple):
         if one_or_multiple == 'one':
-            return [
-            {
+            return {
                 "resource_state": 2,
                 "athlete": {
                     "id": 134815,
@@ -100,8 +102,7 @@ class TestTourTracker(unittest.TestCase):
                 "private": False,
                 "flagged": False,
                 "max_speed": 11,
-            },
-        ]
+            }
 
         if one_or_multiple == 'multiple':
             return [
@@ -212,22 +213,38 @@ class TestTourTracker(unittest.TestCase):
         db.session.add(strava_access_token)
         db.session.commit()
 
+    def make_user_admin(self):
+        self.base_user[0].isadmin = True
+        db.session.commit()
+
     def create_dummy_tour(self, one_or_multiple):
         start_date = int(round((datetime.now() - timedelta(days=3)).timestamp()))
         end_date = int(round((datetime.now() + timedelta(days=3)).timestamp()))
         test_tour = Tour('test_tour', start_date, end_date, self.base_user[0].uuid)
         db.session.add(test_tour)
         activities = self.return_example_strava_activities(one_or_multiple)
-        for activity in activities:
+        if one_or_multiple is 'multiple':
+            for activity in activities:
+                new_activity = TourActivities(
+                    activity['id'],
+                    activity['name'],
+                    activity['start_date_local'],
+                    activity['map']['summary_polyline'],
+                    test_tour.tour_uuid,
+                    self.base_user[0].uuid
+                )
+                db.session.add(new_activity)
+        elif one_or_multiple is 'one':
             new_activity = TourActivities(
-                activity['id'],
-                activity['name'],
-                activity['start_date_local'],
-                activity['map']['summary_polyline'],
+                activities['id'],
+                activities['name'],
+                activities['start_date_local'],
+                activities['map']['summary_polyline'],
                 test_tour.tour_uuid,
                 self.base_user[0].uuid
             )
             db.session.add(new_activity)
+
         db.session.commit()
         return db.session.execute(db.select(Tour).filter_by(id=1)).first()
 
@@ -417,8 +434,7 @@ class TestTourTracker(unittest.TestCase):
         assert 'Password reset. Please log in' in post_html
 
     def test_admin_user_profile_page(self):
-        self.base_user[0].isadmin = True
-        db.session.commit()
+        self.make_user_admin()
         self.login_helper(self.base_user[0].email, 'test_password')
         response = self.client.get('/index', follow_redirects=True)
         html = response.get_data(as_text=True)
@@ -677,7 +693,7 @@ class TestTourTracker(unittest.TestCase):
         mock_response.return_value = self.create_mock_response(response_body, 200)
         self.strava_authenticate_user()
         result = get_individual_strava_activity(self.base_user[0], 154504250376823)
-        self.assertEqual(result[0]['name'], 'Happy Friday')
+        self.assertEqual(result['name'], 'Happy Friday')
 
     # def test_create_tour(self):
     #     self.login_helper('strava@test.com', 'testtest')
@@ -772,3 +788,281 @@ class TestTourTracker(unittest.TestCase):
         self.assertEqual(tour_activities.activity_name, 'test_activity_name')
         self.assertEqual(tour_activities.activity_date, 'test_activity_date')
         self.assertEqual(tour_activities.summary_polyline, 'polyline')
+
+
+
+    ###################
+    ## WEBHOOK TESTS ##
+    ###################
+
+    @patch('tourtracker_app.strava_webhook.routes.requests.post')
+    def test_create_webhook_subscription(self, mock_response):
+        from tourtracker_app.models.strava_api_models import StravaWebhookSubscription
+        self.make_user_admin()
+        self.login_helper(self.base_user[0].email, 'test_password')
+        mock_response_body = {
+            'id': 1
+        }
+        mock_response.return_value = self.create_mock_response(mock_response_body, 200)
+        response = self.client.get('/strava_webhook/subscribe', follow_redirects=True)
+        webhook_db_object = db.session.execute(db.Select(StravaWebhookSubscription).filter_by(id=1)).first()
+        self.assertEqual(response.request.path, '/strava_webhook/admin')
+        self.assertIsNotNone(webhook_db_object)
+        self.assertEqual(webhook_db_object[0].subscription_id, 1)
+        self.logout_helper()
+
+    @patch('tourtracker_app.strava_webhook.routes.requests.post')
+    def test_create_webhook_subscription_bad_request(self, mock_response):
+        from tourtracker_app.models.strava_api_models import StravaWebhookSubscription
+        self.make_user_admin()
+        self.login_helper(self.base_user[0].email, 'test_password')
+        mock_response_body = {
+            'message': 'undefined error'
+        }
+        mock_response.return_value = self.create_mock_response(mock_response_body, 400)
+        response = self.client.get('/strava_webhook/subscribe', follow_redirects=True)
+        webhook_db_object = db.session.execute(db.Select(StravaWebhookSubscription).filter_by(id=1)).first()
+        self.assertEqual(response.request.path, '/strava_webhook/admin')
+        self.assertIsNone(webhook_db_object)
+        self.assertIn('Webhook subscription error!', response.data.decode())
+        self.logout_helper()
+
+    @patch('tourtracker_app.strava_webhook.routes.requests.get')
+    def test_view_webhook_subscription(self, mock_response):
+        self.login_helper(self.base_user[0].email, 'test_password')
+        mock_response_body = {
+            'subscription_id': 1,
+            'other_details': 'details details details'
+        }
+        mock_response.return_value = self.create_mock_response(mock_response_body, 200)
+        response = self.client.get('/strava_webhook/view', follow_redirects=True)
+        self.assertEqual(response.request.path, '/strava_webhook/view')
+        self.assertIn('details details details', response.data.decode())
+        self.logout_helper()
+
+    @patch('tourtracker_app.strava_webhook.routes.requests.delete')
+    def test_delete_webhook_subscription(self, mock_response):
+        from tourtracker_app.models.strava_api_models import StravaWebhookSubscription
+        self.make_user_admin()
+        self.login_helper(self.base_user[0].email, 'test_password')
+        dummy_webhook_subscription = StravaWebhookSubscription(
+            subscription_id = 2
+        )
+        db.session.add(dummy_webhook_subscription)
+        db.session.commit()
+        mock_response_body = {}
+        mock_response.return_value = self.create_mock_response(mock_response_body, 204)
+        response = self.client.get('/strava_webhook/delete', follow_redirects=True)
+        webhook_db_object = db.session.execute(db.Select(StravaWebhookSubscription)).first()
+        self.assertIsNone(webhook_db_object)
+        self.assertEqual(response.request.path, '/strava_webhook/admin')
+        self.assertIn('Delete successful', response.data.decode())
+        self.logout_helper()
+
+    @patch('tourtracker_app.strava_webhook.routes.requests.delete')
+    def test_delete_webhook_subscription_bad_request(self, mock_response):
+        from tourtracker_app.models.strava_api_models import StravaWebhookSubscription
+        self.make_user_admin()
+        self.login_helper(self.base_user[0].email, 'test_password')
+        dummy_webhook_subscription = StravaWebhookSubscription(
+            subscription_id = 2
+        )
+        db.session.add(dummy_webhook_subscription)
+        db.session.commit()
+        mock_response_body = {
+            'message': 'some error'
+        }
+        mock_response.return_value = self.create_mock_response(mock_response_body, 400)
+        response = self.client.get('/strava_webhook/delete', follow_redirects=True)
+        webhook_db_object = db.session.execute(db.Select(StravaWebhookSubscription)).first()
+        self.assertIsNotNone(webhook_db_object)
+        self.assertEqual(webhook_db_object[0].subscription_id, 2)
+        self.assertEqual(response.request.path, '/strava_webhook/admin')
+        self.assertIn('Some error while deleting', response.data.decode())
+        self.logout_helper()
+
+    def test_webhook_response_get(self):
+        webhook_callback_base_url = '/strava_webhook/callback'
+        params = {
+            'hub.mode': 'subscribe',
+            'hub.challenge': 'hub_challenge_string',
+            'hub.verify_token': current_app.config['STRAVA_WEBHOOK_VERIFY_TOKEN']
+        }
+        webhook_callback_url = webhook_callback_base_url + ("?" + urlencode(params))
+        response = self.client.get(webhook_callback_url, follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('hub_challenge_string', response.data.decode())
+
+    def test_webhook_response_get_bad_verify_token(self):
+        webhook_callback_base_url = '/strava_webhook/callback'
+        params = {
+            'hub.mode': 'subscribe',
+            'hub.challenge': 'hub_challenge_string',
+            'hub.verify_token': 'bad_verify_token'
+        }
+        webhook_callback_url = webhook_callback_base_url + ("?" + urlencode(params))
+        response = self.client.get(webhook_callback_url, follow_redirects=True)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('bad verify token', response.data.decode())
+
+    @patch('tourtracker_app.strava_api_auth.strava_api_utilities.requests.get')
+    def test_webhook_activity_create(self, mock_response):
+        self.strava_authenticate_user()
+        tour_db_object = self.create_dummy_tour('one')
+        db.session.delete(tour_db_object[0].tour_activities[0])
+        db.session.commit()
+        tour_activities = db.session.execute(db.Select(TourActivities)).first()
+        self.assertIsNone(tour_activities)
+        response_body = self.return_example_strava_activities('one')
+        response_body['start_date_local'] = datetime.now().isoformat()
+        mock_response.return_value = self.create_mock_response(response_body, 200)
+        request_body = {
+            'aspect_type': 'create',
+            'object_type': 'activity',
+            'object_id': 123456,
+            'owner_id': 1002,
+            'subscription_id': 1,
+            'event_time': int(round((datetime.now()).timestamp()))
+        }
+        response = self.client.post('/strava_webhook/callback', json=request_body, follow_redirects=True)
+        tour_activity = db.session.execute(db.Select(TourActivities)).first()
+        self.assertIsNotNone(tour_activity)
+        self.assertEqual(tour_activity[0].activity_name, 'Happy Friday')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('"success":true', response.data.decode())
+
+    def test_webhook_activity_update_title(self):
+        self.strava_authenticate_user()
+        tour_db_object = self.create_dummy_tour('one')
+        request_body = {
+            'aspect_type': 'update',
+            'object_type': 'activity',
+            'object_id': tour_db_object[0].tour_activities[0].strava_activity_id,
+            'owner_id': 1002,
+            'subscription_id': 1,
+            'event_time': int(round((datetime.now()).timestamp())),
+            'updates': {
+                'title': 'new_test_title'
+            }
+        }
+        response = self.client.post('/strava_webhook/callback', json=request_body, follow_redirects=True)
+        tour_activity = db.session.execute(db.Select(TourActivities)).first()
+        self.assertEqual(tour_activity[0].activity_name, 'new_test_title')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('"success":true', response.data.decode())
+
+    def test_webhook_activity_update_type(self):
+        self.strava_authenticate_user()
+        tour_db_object = self.create_dummy_tour('one')
+        request_body = {
+            'aspect_type': 'update',
+            'object_type': 'activity',
+            'object_id': tour_db_object[0].tour_activities[0].strava_activity_id,
+            'owner_id': 1002,
+            'subscription_id': 1,
+            'event_time': int(round((datetime.now()).timestamp())),
+            'updates': {
+                'type': 'Run'
+            }
+        }
+        response = self.client.post('/strava_webhook/callback', json=request_body, follow_redirects=True)
+        tour_activity = db.session.execute(db.Select(TourActivities)).first()
+        self.assertIsNone(tour_activity)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('"success":true', response.data.decode())
+
+    def test_webhook_activity_update_make_private(self):
+        self.strava_authenticate_user()
+        tour_db_object = self.create_dummy_tour('one')
+        request_body = {
+            'aspect_type': 'update',
+            'object_type': 'activity',
+            'object_id': tour_db_object[0].tour_activities[0].strava_activity_id,
+            'owner_id': 1002,
+            'subscription_id': 1,
+            'event_time': int(round((datetime.now()).timestamp())),
+            'updates': {
+                'private': 'true'
+            }
+        }
+        response = self.client.post('/strava_webhook/callback', json=request_body, follow_redirects=True)
+        tour_activity = db.session.execute(db.Select(TourActivities)).first()
+        self.assertIsNone(tour_activity)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('"success":true', response.data.decode())
+
+    def test_webhook_activity_delete(self):
+        self.strava_authenticate_user()
+        tour_db_object = self.create_dummy_tour('one')
+        request_body = {
+            'aspect_type': 'delete',
+            'object_type': 'activity',
+            'object_id': tour_db_object[0].tour_activities[0].strava_activity_id,
+            'owner_id': 1002,
+            'subscription_id': 1,
+            'event_time': int(round((datetime.now()).timestamp())),
+        }
+        response = self.client.post('/strava_webhook/callback', json=request_body, follow_redirects=True)
+        tour_activity = db.session.execute(db.Select(TourActivities)).first()
+        self.assertIsNone(tour_activity)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('"success":true', response.data.decode())
+
+    def test_webhook_athlete_update(self):
+        self.strava_authenticate_user()
+        request_body = {
+            'aspect_type': 'update',
+            'object_type': 'athlete',
+            'object_id': 1002,
+            'owner_id': 1002,
+            'subscription_id': 1,
+            'event_time': int(round((datetime.now()).timestamp())),
+        }
+        response = self.client.post('/strava_webhook/callback', json=request_body, follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+
+
+
+
+
+
+
+
+
+
+    def test_check_tour_date_range(self):
+        self.create_dummy_tour('multiple')
+        in_date_range, tour = check_tour_date_range(datetime.now().isoformat(), self.base_user[0])
+        self.assertTrue(in_date_range)
+        self.assertIsNotNone(tour)
+        self.assertEqual(tour.tour_name, 'test_tour')
+
+    def test_check_tour_date_range_out_of_range(self):
+        self.create_dummy_tour('multiple')
+        in_date_range, tour = check_tour_date_range((datetime.now() - timedelta(days=6)).isoformat(), self.base_user[0])
+        self.assertFalse(in_date_range)
+        self.assertIsNone(tour)
+
+    def test_check_tour_date_range_no_tours(self):
+        in_date_range, tour = check_tour_date_range(datetime.now().isoformat(), self.base_user[0])
+        self.assertFalse(in_date_range)
+        self.assertIsNone(tour)
+
+    def test_check_activity_exists(self):
+        self.create_dummy_tour('one')
+        activity = self.return_example_strava_activities('one')
+        result = check_activity_exists(activity['id'])
+        self.assertTrue(result)
+
+    def test_check_activity_exists_no_activity(self):
+        activity = self.return_example_strava_activities('one')
+        result = check_activity_exists(activity['id'])
+        self.assertFalse(result)
+
+
+
+
+
+
+
+

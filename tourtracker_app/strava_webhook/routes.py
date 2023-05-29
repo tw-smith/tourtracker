@@ -19,12 +19,16 @@ async def create_webhook_subscription():
                    callback_url=current_app.config['STRAVA_WEBHOOK_CALLBACK_URL'], 
                    verify_token=current_app.config['STRAVA_WEBHOOK_VERIFY_TOKEN'])
     base_url = current_app.config['STRAVA_WEBHOOK_BASE_URL']
-    response = requests.post(base_url, data=payload).json()
-    strava_webhook_subscription = StravaWebhookSubscription(
-        subscription_id=response['id']
-    )
-    db.session.add(strava_webhook_subscription)
-    db.session.commit()
+    response = requests.post(base_url, data=payload)
+    if response.ok:
+        response_json = response.json()
+        strava_webhook_subscription = StravaWebhookSubscription(
+            subscription_id=response_json['id']
+        )
+        db.session.add(strava_webhook_subscription)
+        db.session.commit()
+    else:
+        flash('Webhook subscription error!')
     return redirect(url_for('strava_webhook.webhook_admin'))
 
 
@@ -63,15 +67,18 @@ def webhook_response():
         challenge = request.args.get('hub.challenge')
         verify_token = request.args.get('hub.verify_token')
         if verify_token != current_app.config['STRAVA_WEBHOOK_VERIFY_TOKEN']:
-            return 'error'
+            body = {'message': 'bad verify token'}
+            return make_response(body, 400)
         else:
             body = {'hub.challenge': challenge}
             return make_response(body, 200)
     if request.method == 'POST': #TODO this might need to be async to return 200 to strava within 2 secs
+        print('in post branch')
         post_body = request.get_json()
+        print(post_body)
         if post_body['object_type'] == 'athlete':
-            # do athelete stuff
-            return make_response(200)
+            #TODO do athelete stuff
+            return make_response({}, 200)
         elif post_body['object_type'] == 'activity':
             activity_id = post_body['object_id']
             # We need to find the user manually because current_user doesn't work with a POST request from
@@ -93,6 +100,10 @@ def webhook_response():
                         db.session.commit()
 
             elif post_body['aspect_type'] == 'update':
+                allowed_sport_types = [
+                    'Ride',
+                    'EBikeRide'
+                ]
                 need_to_update_db = False
                 activity = db.session.execute(db.Select(TourActivities).filter_by(strava_activity_id=activity_id)).first()
                 for field in post_body['updates']:
@@ -100,11 +111,11 @@ def webhook_response():
                         activity[0].activity_name = post_body['updates']['title']
                         need_to_update_db = True
                     if field == 'type':
-                        if post_body['updates']['type'] != 'Ride':
+                        if post_body['updates']['type'] not in allowed_sport_types:
                             db.session.delete(activity[0])
                             need_to_update_db = True
                     if field == 'private':
-                        if post_body['updates']['private'] is True:
+                        if post_body['updates']['private'] == 'true':
                             db.session.delete(activity[0])
                             need_to_update_db = True
                 if need_to_update_db:
