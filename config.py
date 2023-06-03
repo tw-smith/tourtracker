@@ -29,7 +29,7 @@ class ProductionConfig(Config):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'db/tour_tracker_prod.db')
     STRAVA_CLIENT_ID = os.environ.get('PROD_STRAVA_CLIENT_ID')
     STRAVA_CLIENT_SECRET = os.environ.get('PROD_STRAVA_CLIENT_SECRET')
-    STRAVA_WEBHOOK_CALLBACK_URL = 'http://'
+    STRAVA_WEBHOOK_CALLBACK_URL = 'https://tourtracker.tw-smith.me/strava_webhook/callback'
 
 
 
