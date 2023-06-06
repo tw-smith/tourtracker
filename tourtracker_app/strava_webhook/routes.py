@@ -133,9 +133,9 @@ def check_tour_date_range(activity_date, user):
     tours = user.tours
     if tours is not None:
         for tour in tours:
+            # Replace Z at end of ISO8601 string with +00:00 to allow compatability with Python < 3.11 fromisoformat
+            activity_date = activity_date.replace('Z', '+00:00')
             if tour.start_date <= datetime.fromisoformat(activity_date).timestamp() <= tour.end_date:
-                print('tour')
-                print(tour)
                 return True, tour
             return False, None
     return False, None
