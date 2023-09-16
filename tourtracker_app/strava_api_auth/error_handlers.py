@@ -1,7 +1,7 @@
 from tourtracker_app.strava_api_auth import bp
 from tourtracker_app import db
 from tourtracker_app.models.strava_api_models import StravaAccessToken, StravaRefreshToken
-from flask_login import current_user
+#from flask_login import current_user
 from flask import flash, redirect, url_for
 
 

@@ -1,10 +1,10 @@
 
 from flask import Flask, flash, redirect, url_for
 from functools import wraps
-from flask_login import current_user
 from config import Config, DevelopmentConfig, ProductionConfig
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_jwt_extended import JWTManager
 import requests
 from urllib.parse import urlencode
 # from tourtracker_app.models.auth_models import User
@@ -13,7 +13,6 @@ from urllib.parse import urlencode
 
 # AUTH
 from flask_mail import Mail, Message
-from flask_login import LoginManager
 
 import logging
 from logging.handlers import RotatingFileHandler
@@ -24,8 +23,8 @@ db = SQLAlchemy()
 migrate = Migrate()
 
 #AUTH
-login = LoginManager()
-login.login_view = 'auth.login'
+jwt = JWTManager()
+#login.login_view = 'auth.login'
 mail = Mail()
 
 def init_webhooks(base_url):
@@ -82,6 +81,7 @@ def create_app(config_class=Config):
     # AUTH
     login.init_app(app)
     mail.init_app(app)
+    jwt.init_app(app)
 
     from tourtracker_app.main import bp as main_bp
     app.register_blueprint(main_bp)

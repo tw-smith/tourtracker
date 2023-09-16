@@ -8,16 +8,17 @@ import unittest
 from urllib.parse import urlencode
 from unittest.mock import Mock, patch
 from flask import current_app
-from flask_login import current_user
+#from flask_login import current_user
 from requests.models import Response
 from tourtracker_app import create_app, db
 from tourtracker_app.models.auth_models import User
 from tourtracker_app.models.tour_models import Tour, TourActivities
-from tourtracker_app.email import send_email
 from tourtracker_app.strava_api_auth.strava_api_utilities import get_strava_activities, get_individual_strava_activity, \
     handle_strava_api_response, strava_request_header_prep
 from tourtracker_app.strava_webhook.routes import check_tour_date_range, check_activity_exists
 from tourtracker_app.strava_api_auth.error_handlers import StravaBadRequestException
+
+
 
 from test_utilities import login_helper, logout_helper
 

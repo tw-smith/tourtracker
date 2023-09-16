@@ -1,5 +1,5 @@
 from flask import render_template, make_response, redirect, url_for, flash, request, app
-from flask_login import login_required, current_user
+from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
 from tourtracker_app import db
 from tourtracker_app.models.tour_models import Tour, TourActivities
 from tourtracker_app.models.strava_api_models import StravaAccessToken, StravaRefreshToken
@@ -10,6 +10,9 @@ from requests import HTTPError
 from datetime import datetime, date
 from tourtracker_app.strava_api_auth.strava_api_utilities import get_strava_activities
 
+# TODO: remove auth elements from database tables
+# TODO: do we want to use auth server uuid for all user ID or are we happy to transmit email/username over jwt?
+# TODO: update tests
 
 
 @bp.route('/', methods=['GET'])
@@ -25,7 +28,7 @@ def timestamp_to_str(timestamp):
     return date.fromtimestamp(timestamp)
 
 @bp.route('/profile')
-@login_required
+@jwt_required()
 def user_profile():
     form = TourForm()
     if current_user.strava_athlete_id is not None: # TODO probably a better/more robust way to do this
@@ -42,7 +45,7 @@ def user_profile():
 
 
 @bp.route('/tour/<uuid>', methods=['GET'])
-@login_required
+@jwt_required()
 def tour_detail(uuid):
     tour = db.session.execute(db.select(Tour).filter_by(tour_uuid=uuid)).first()
     tour = tour[0]
@@ -76,7 +79,7 @@ def get_tour_activities(uuid):
 
 
 @bp.route('/createtour', methods=['GET', 'POST'])
-@login_required
+@jwt_required()
 def create_tour():
     if request.method == 'GET':
         form = TourForm()
@@ -134,7 +137,7 @@ def create_tour():
 
 
 @bp.route('/tour/refresh/<uuid>', methods=['GET'])
-@login_required
+@jwt_required()
 def refresh_tour(uuid):
     tour = db.session.execute(db.select(Tour).filter_by(tour_uuid=uuid)).first()
     activities = get_strava_activities(current_user, tour[0].start_date, tour[0].end_date)
@@ -152,7 +155,7 @@ def refresh_tour(uuid):
 
 
 @bp.route('/deletetour/<uuid>', methods=['GET'])
-@login_required
+@jwt_required()
 def delete_tour(uuid):
     tour = db.session.execute(db.select(Tour).filter_by(tour_uuid=uuid)).first()
 

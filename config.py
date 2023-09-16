@@ -30,6 +30,7 @@ class ProductionConfig(Config):
     STRAVA_CLIENT_ID = os.environ.get('PROD_STRAVA_CLIENT_ID')
     STRAVA_CLIENT_SECRET = os.environ.get('PROD_STRAVA_CLIENT_SECRET')
     STRAVA_WEBHOOK_CALLBACK_URL = 'https://tourtracker.tw-smith.me/strava_webhook/callback'
+    AUTH_SERVER_URL = 'https://auth.tw-smith.me'
 
 
 
@@ -39,3 +40,4 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'db/tour_tracker_dev.db')
     STRAVA_CLIENT_ID = os.environ.get('DEV_STRAVA_CLIENT_ID')
     STRAVA_CLIENT_SECRET = os.environ.get('DEV_STRAVA_CLIENT_SECRET')
+    AUTH_SERVER_URL = 'ngrok testing url'

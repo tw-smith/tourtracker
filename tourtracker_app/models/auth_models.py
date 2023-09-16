@@ -1,20 +1,24 @@
-from tourtracker_app import db, login
+from tourtracker_app import db, jwt as jwt_extended
 from flask import current_app
 from argon2 import PasswordHasher, exceptions
 import argon2
-import jwt
+from jose import jwt, JWTError, ExpiredSignatureError
 from datetime import datetime, timedelta
 import uuid
 
 ph = PasswordHasher()
 
 
-@login.user_loader
-def load_user(email):
-    user = db.session.execute(db.Select(User).filter_by(email=email)).first()
-    if user:
-        return user[0]
-    return None
+# @login.user_loader
+# def load_user(email):
+#     user = db.session.execute(db.Select(User).filter_by(email=email)).first()
+#     if user:
+#         return user[0]
+#     return None
+@jwt_extended.user_lookup_loader
+def user_lookup_callback(_jwt_header, jwt_data):
+    identity = jwt_data["sub"] # TODO this means we will need to have the auth server uuid here
+    user = db.session.execute(db.Select(User).filter_by(uuid=identity)).one_or_none()
 
 
 class User(db.Model):
@@ -57,42 +61,51 @@ class User(db.Model):
 
         return check
 
-    def create_token(self, expires_in=600):
-        token = jwt.encode({
-            'iss': current_app.config['JWT_ISSUER'],
-            'iat': datetime.utcnow(),
-            'exp': datetime.utcnow() + timedelta(minutes=15),
-            'uuid': self.uuid,
-        }, current_app.config['SECRET_KEY'],
-            headers={
-            'typ': 'JWT',
-            'alg': 'HS256'
-        }
-        )
-        print(token)
-        return token
+    # def create_token(self, expires_in=600):
+    #     token = jwt.encode({
+    #         'iss': current_app.config['JWT_ISSUER'],
+    #         'iat': datetime.utcnow(),
+    #         'exp': datetime.utcnow() + timedelta(minutes=15),
+    #         'uuid': self.uuid,
+    #     }, current_app.config['SECRET_KEY'],
+    #         headers={
+    #         'typ': 'JWT',
+    #         'alg': 'HS256'
+    #     }
+    #     )
+    #     print(token)
+    #     return token
 
     @staticmethod
     def decode_token(token):
         try:
-            return jwt.decode(
-                token,
-                options={'require': ['exp', 'iss']},
-                key=current_app.config['SECRET_KEY'],
-                algorithms='HS256',
-                issuer=current_app.config['JWT_ISSUER'])
-        except jwt.exceptions.ExpiredSignatureError:
-            raise jwt.exceptions.ExpiredSignatureError
-        except jwt.exceptions.InvalidAlgorithmError:
-            raise jwt.exceptions.InvalidAlgorithmError
-        except jwt.exceptions.InvalidIssuedAtError:
-            raise jwt.exceptions.InvalidIssuedAtError
-        except jwt.exceptions.InvalidSignatureError:
-            raise jwt.exceptions.InvalidSignatureError
-        except jwt.exceptions.MissingRequiredClaimError:
-            raise jwt.exceptions.MissingRequiredClaimError
-        except jwt.exceptions.DecodeError:
-            raise jwt.exceptions.DecodeError
+            token_payload = jwt.decode(token, key=current_app.config['SECRET_KEY'], algorithms='HS256')
+        except ExpiredSignatureError:
+            raise ExpiredSignatureError
+        except JWTError:
+            raise JWTError
+
+    # @staticmethod
+    # def decode_token(token):
+    #     try:
+    #         return jwt.decode(
+    #             token,
+    #             options={'require': ['exp', 'iss']},
+    #             key=current_app.config['SECRET_KEY'],
+    #             algorithms='HS256',
+    #             issuer=current_app.config['JWT_ISSUER'])
+    #     except jwt.exceptions.ExpiredSignatureError:
+    #         raise jwt.exceptions.ExpiredSignatureError
+    #     except jwt.exceptions.InvalidAlgorithmError:
+    #         raise jwt.exceptions.InvalidAlgorithmError
+    #     except jwt.exceptions.InvalidIssuedAtError:
+    #         raise jwt.exceptions.InvalidIssuedAtError
+    #     except jwt.exceptions.InvalidSignatureError:
+    #         raise jwt.exceptions.InvalidSignatureError
+    #     except jwt.exceptions.MissingRequiredClaimError:
+    #         raise jwt.exceptions.MissingRequiredClaimError
+    #     except jwt.exceptions.DecodeError:
+    #         raise jwt.exceptions.DecodeError
         
     @staticmethod
     def verify_user_verification_token(token):
@@ -107,20 +120,20 @@ class User(db.Model):
 
     # For Flask-Login
 
-    @property
-    def is_active(self):
-        return self.verified
-    
-    @property
-    def is_authenticated(self):
-        return True
-
-    @property
-    def is_anonymous(self):
-        return False
-
-    def get_id(self):
-        return self.email
+    # @property #
+    # def is_active(self):
+    #     return self.verified
+    #
+    # @property
+    # def is_authenticated(self):
+    #     return True
+    #
+    # @property
+    # def is_anonymous(self):
+    #     return False
+    #
+    # def get_id(self):
+    #     return self.email
 
 
     def __repr__(self):

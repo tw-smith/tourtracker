@@ -5,7 +5,7 @@ from tourtracker_app import db
 from tourtracker_app.strava_api_auth import bp
 from urllib.parse import urlencode
 import requests
-from flask_login import current_user
+#from flask_login import current_user
 
 
 def strava_token_request(grant_type, code=None, refresh_token=None):
