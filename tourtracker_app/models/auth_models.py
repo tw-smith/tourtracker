@@ -8,26 +8,20 @@ import uuid
 
 ph = PasswordHasher()
 
-
-# @login.user_loader
-# def load_user(email):
-#     user = db.session.execute(db.Select(User).filter_by(email=email)).first()
-#     if user:
-#         return user[0]
-#     return None
 @jwt_extended.user_lookup_loader
 def user_lookup_callback(_jwt_header, jwt_data):
     identity = jwt_data["sub"] # TODO this means we will need to have the auth server uuid here
-    user = db.session.execute(db.Select(User).filter_by(uuid=identity)).one_or_none()
+    user = db.session.execute(db.Select(User).filter_by(public_id=identity)).one_or_none()
+    user = user[0]
+    return user
 
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(db.String(50), unique=True)
+    public_id = db.Column(db.String(50), unique=True)
     email = db.Column(db.String(50), unique=True)
+    username = db.Column(db.String(50), unique=True)
     isadmin = db.Column(db.Boolean(1))
-    password_hash = db.Column(db.String(128))
-    verified = db.Column(db.Boolean(1))
     strava_athlete_id = db.Column(db.Integer, unique=True, index=True)
     strava_access_token = db.relationship('StravaAccessToken', backref='user', lazy='dynamic')
     strava_refresh_token = db.relationship('StravaRefreshToken', backref='user', lazy='dynamic')
@@ -35,16 +29,12 @@ class User(db.Model):
     activities = db.relationship('TourActivities', backref='user', lazy='dynamic')
     
 
-    def __init__(self, email, password):
-        self.uuid = str(uuid.uuid4())
+    def __init__(self, email, username, public_id):
+        self.public_id = public_id
         self.isadmin = False
         self.email = email
-        self.password_hash = ph.hash(password)
-        self.verified = False
+        self.username = username
         self.strava_athlete_id = None
-
-        # self.strava_access_token = None
-        # self.strava_refresh_token = None
 
     def set_password(self, password):
         self.password_hash = ph.hash(password)
@@ -117,24 +107,6 @@ class User(db.Model):
         uuid = uuid['uuid']
         print('decoded uuid is ' + uuid)
         return db.session.execute(db.select(User).filter_by(uuid=uuid)).first()
-
-    # For Flask-Login
-
-    # @property #
-    # def is_active(self):
-    #     return self.verified
-    #
-    # @property
-    # def is_authenticated(self):
-    #     return True
-    #
-    # @property
-    # def is_anonymous(self):
-    #     return False
-    #
-    # def get_id(self):
-    #     return self.email
-
 
     def __repr__(self):
         return '<User {}>'.format(self.email)

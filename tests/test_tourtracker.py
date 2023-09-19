@@ -46,7 +46,8 @@ class TestTourTracker(unittest.TestCase):
     def populate_db(self):
         user = User(
             email='test@test.com',
-            password='test_password',
+            username='Test User',
+            public_id='test_public_id'
         )
         user.verified = True
         db.session.add(user)
@@ -57,6 +58,17 @@ class TestTourTracker(unittest.TestCase):
             'email': email,
             'password': password,
         }, follow_redirects=True)
+
+
+    def auth_jwt_helper(self, email, password, valid):
+        if valid is True:
+            response_body = {'access_token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0X3B1YmxpY19pZCIsImV4cCI6MTkxNTg3OTQzMH0.COYeHpx1rsSRvAR6I4XslDL3lKmihGzV7tV_FP4aKyY'}
+            status_code = 200
+            response = self.create_mock_response(response_body, status_code)
+            #response.headers = {'Authorization': 'Bearer: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0X3B1YmxpY19pZCIsImV4cCI6MTkxNTg3OTQzMH0.COYeHpx1rsSRvAR6I4XslDL3lKmihGzV7tV_FP4aKyY'}
+            # TODO add fgp cookie
+            return response
+
 
     def logout_helper(self):
         return self.client.get('/auth/logout', follow_redirects=True)
@@ -221,7 +233,7 @@ class TestTourTracker(unittest.TestCase):
     def create_dummy_tour(self, one_or_multiple):
         start_date = int(round((datetime.now() - timedelta(days=3)).timestamp()))
         end_date = int(round((datetime.now() + timedelta(days=3)).timestamp()))
-        test_tour = Tour('test_tour', start_date, end_date, self.base_user[0].uuid)
+        test_tour = Tour('test_tour', start_date, end_date, self.base_user[0].public_id)
         db.session.add(test_tour)
         activities = self.return_example_strava_activities(one_or_multiple)
         if one_or_multiple is 'multiple':
@@ -232,7 +244,7 @@ class TestTourTracker(unittest.TestCase):
                     activity['start_date_local'],
                     activity['map']['summary_polyline'],
                     test_tour.tour_uuid,
-                    self.base_user[0].uuid
+                    self.base_user[0].public_id
                 )
                 db.session.add(new_activity)
         elif one_or_multiple is 'one':
@@ -242,7 +254,7 @@ class TestTourTracker(unittest.TestCase):
                 activities['start_date_local'],
                 activities['map']['summary_polyline'],
                 test_tour.tour_uuid,
-                self.base_user[0].uuid
+                self.base_user[0].public_id
             )
             db.session.add(new_activity)
 
@@ -281,12 +293,17 @@ class TestTourTracker(unittest.TestCase):
         assert response.status_code == status_code
         assert response.request.path == auth_redirect_url
 
-    def test_login(self):
-        response = self.login_helper('test@test.com', 'test_password')
-        assert response.status_code == 200
+
+    @patch('tourtracker_app.auth.routes.requests.post')
+    def test_login(self, mock_response):
+        mock_response.return_value = self.auth_jwt_helper('test@test.com', 'test_password', True)
+        data = {'username': 'testuser',
+                'password': 'testpassword'}
+        response = self.client.post('/auth/login', data=data, follow_redirects=True)
         html = response.get_data(as_text=True)
-        assert 'test@test.com' in html
-        self.logout_helper()
+        assert response.status_code == 200
+        assert response.request.path == '/profile'
+        self.assertIn('Username: Test User', html)
 
     def test_logout(self):
         self.login_helper('test@test.com', 'test_password')
@@ -356,20 +373,26 @@ class TestTourTracker(unittest.TestCase):
         assert response.request.path == '/auth/signup'
         assert self.base_user[0].verified is False
 
-    def test_register_user(self):
+    @patch('tourtracker_app.auth.routes.requests.post')
+    def test_register_user(self, mock_response):
+        response_body = {
+            'msg': 'user created',
+            'public_id': 'dummy_uuid'
+        }
+        mock_response.return_value = self.create_mock_response(response_body, 201)
         data = {
             'email': 'testreg@test.com',
-            'password': 'test_password',
-            'repeat_pw': 'test_password',
+            'username': 'test user',
+            'password': 'test_password'
         }
         response = self.client.post('/auth/signup', data=data, follow_redirects=True)
-        assert response.status_code == 200
+        assert response.status_code == 201
         html = response.get_data(as_text=True)
         assert 'Please check your email for a verification link' in html
 
     def test_register_user_already_exists(self):
         data = {
-            'email': self.base_user[0].email,
+            'email': self.base_user[0].username,
             'password': 'test_password',
             'repeat_pw': 'test_password',
         }
@@ -436,7 +459,7 @@ class TestTourTracker(unittest.TestCase):
 
     def test_admin_user_profile_page(self):
         self.make_user_admin()
-        self.login_helper(self.base_user[0].email, 'test_password')
+        self.login_helper(self.base_user[0].username, 'test_password')
         response = self.client.get('/index', follow_redirects=True)
         html = response.get_data(as_text=True)
         assert 'Webhook Admin' in html
@@ -526,7 +549,7 @@ class TestTourTracker(unittest.TestCase):
             'expires_at': '123456789'
         }
         mock_response.return_value = self.create_mock_response(response_body, 200)
-        self.login_helper(self.base_user[0].email, 'test_password')
+        self.login_helper(self.base_user[0].username, 'test_password')
         response = self.client.get('/strava/token_exchange?code=dummycode', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self.base_user[0].strava_athlete_id, 1002)
@@ -550,7 +573,7 @@ class TestTourTracker(unittest.TestCase):
         mock_response.return_value = self.create_mock_response(response_body, 200)
         self.base_user[0].strava_athlete_id = 1003
         db.session.commit()
-        self.login_helper(self.base_user[0].email, 'test_password')
+        self.login_helper(self.base_user[0].username, 'test_password')
         response = self.client.get('/strava/token_exchange?code=dummycode', follow_redirects=True)
         self.assertIn('already in our database', response.data.decode())
         self.assertEqual(response.request.path, '/profile')
@@ -576,7 +599,7 @@ class TestTourTracker(unittest.TestCase):
         db.session.commit()
         self.assertEqual(self.base_user[0].strava_access_token[0].access_token, 'dummy_access_token')
         self.assertEqual(self.base_user[0].strava_refresh_token[0].refresh_token, 'dummy_refresh_token')
-        self.login_helper(self.base_user[0].email, 'test_password')
+        self.login_helper(self.base_user[0].username, 'test_password')
         response = self.client.get('/strava/strava_deauth', follow_redirects=True)
         strava_access_token = db.session.execute(db.select(StravaAccessToken).filter_by(athlete_id=1002)).first()
         strava_refresh_token = db.session.execute(db.Select(StravaRefreshToken).filter_by(athlete_id=1002)).first()
@@ -591,7 +614,7 @@ class TestTourTracker(unittest.TestCase):
     def test_create_tour_get(self):
         self.base_user[0].strava_athlete_id = 1003
         db.session.commit()
-        self.login_helper(self.base_user[0].email, 'test_password')
+        self.login_helper(self.base_user[0].username, 'test_password')
         response = self.client.get('/createtour', follow_redirects=True)
         html = response.get_data(as_text=True)
         assert 'name="tour_name"' in html
@@ -605,7 +628,7 @@ class TestTourTracker(unittest.TestCase):
         response_body = self.return_example_strava_activities('multiple')
         mock_response.return_value = self.create_mock_response(response_body, 200)
         self.strava_authenticate_user()
-        self.login_helper(self.base_user[0].email, 'test_password')
+        self.login_helper(self.base_user[0].username, 'test_password')
         year = datetime.now().year
         month = datetime.now().month
         start_day = (datetime.now() - timedelta(days=3)).day
@@ -616,12 +639,12 @@ class TestTourTracker(unittest.TestCase):
             'end_date': str(year) + '-' + str(month) + '-' + str(end_day),
         }
         response = self.client.post('/createtour', data=data, follow_redirects=True)
-        tour = db.session.execute(db.Select(Tour).filter_by(user_id=self.base_user[0].uuid)).first()
+        tour = db.session.execute(db.Select(Tour).filter_by(user_id=self.base_user[0].public_id)).first()
         self.assertEqual(tour[0].tour_name, 'test tour name')
         self.assertEqual(response.request.path, '/tour/' + tour[0].tour_uuid)
 
     def test_create_tour_post_bad_form_entry(self):
-        self.login_helper(self.base_user[0].email, 'test_password')
+        self.login_helper(self.base_user[0].username, 'test_password')
         data = {
             'tour_name': 'test tour name',
         }
@@ -632,7 +655,7 @@ class TestTourTracker(unittest.TestCase):
     @patch('tourtracker_app.strava_api_auth.strava_api_utilities.requests.get')
     def test_refresh_tour(self, mock_response):
         self.strava_authenticate_user()
-        self.login_helper(self.base_user[0].email, 'test_password')
+        self.login_helper(self.base_user[0].username, 'test_password')
         response_body = self.return_example_strava_activities('multiple')
         mock_response.return_value = self.create_mock_response(response_body, 200)
         tour_db_object = self.create_dummy_tour('one')
@@ -800,7 +823,7 @@ class TestTourTracker(unittest.TestCase):
     def test_create_webhook_subscription(self, mock_response):
         from tourtracker_app.models.strava_api_models import StravaWebhookSubscription
         self.make_user_admin()
-        self.login_helper(self.base_user[0].email, 'test_password')
+        self.login_helper(self.base_user[0].username, 'test_password')
         mock_response_body = {
             'id': 1
         }
@@ -816,7 +839,7 @@ class TestTourTracker(unittest.TestCase):
     def test_create_webhook_subscription_bad_request(self, mock_response):
         from tourtracker_app.models.strava_api_models import StravaWebhookSubscription
         self.make_user_admin()
-        self.login_helper(self.base_user[0].email, 'test_password')
+        self.login_helper(self.base_user[0].username, 'test_password')
         mock_response_body = {
             'message': 'undefined error'
         }
@@ -830,7 +853,7 @@ class TestTourTracker(unittest.TestCase):
 
     @patch('tourtracker_app.strava_webhook.routes.requests.get')
     def test_view_webhook_subscription(self, mock_response):
-        self.login_helper(self.base_user[0].email, 'test_password')
+        self.login_helper(self.base_user[0].username, 'test_password')
         mock_response_body = {
             'subscription_id': 1,
             'other_details': 'details details details'
@@ -845,7 +868,7 @@ class TestTourTracker(unittest.TestCase):
     def test_delete_webhook_subscription(self, mock_response):
         from tourtracker_app.models.strava_api_models import StravaWebhookSubscription
         self.make_user_admin()
-        self.login_helper(self.base_user[0].email, 'test_password')
+        self.login_helper(self.base_user[0].username, 'test_password')
         dummy_webhook_subscription = StravaWebhookSubscription(
             subscription_id = 2
         )
@@ -864,7 +887,7 @@ class TestTourTracker(unittest.TestCase):
     def test_delete_webhook_subscription_bad_request(self, mock_response):
         from tourtracker_app.models.strava_api_models import StravaWebhookSubscription
         self.make_user_admin()
-        self.login_helper(self.base_user[0].email, 'test_password')
+        self.login_helper(self.base_user[0].username, 'test_password')
         dummy_webhook_subscription = StravaWebhookSubscription(
             subscription_id = 2
         )

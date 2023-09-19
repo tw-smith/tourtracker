@@ -11,8 +11,11 @@ import urllib.parse
 from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
 
 
+
+
+
 @bp.route('/login', methods=['GET','POST'])#TODO: do we check if user is verified anywhere?
-@jwt_required(optional=True)
+@jwt_required(optional=True, locations=['json'])
 def login():
     if current_user:
         return redirect(url_for('main.index'))
@@ -22,7 +25,7 @@ def login():
             params = {
                 "service": "tourtracker",
             }
-            url = f"{current_app.config['AUTH_SERVER_URL']}'/auth?'{urllib.parse.urlencode(params)}"
+            url = f"{current_app.config['AUTH_SERVER_URL']}/auth?{urllib.parse.urlencode(params)}"
             response = requests.post(url,
                                      data={'username': form.username.data,
                                            'password': form.password.data})
@@ -34,6 +37,7 @@ def login():
                 redirect_to = request.args.get('next')
                 if not redirect_to or url_parse(redirect_to).netloc != '':
                     redirect_to = url_for('main.index')
+                redirect_to = f"{redirect_to}?jwt={response.json()['access_token']}"
                 return redirect(redirect_to)
     return render_template('login.html', title='Sign In', form=form)
 
@@ -60,7 +64,12 @@ def signup():
                 message = response.json()['msg']
                 flash(message)
                 return render_template('signup.html', title='Sign Up', form=form)
-            if response.status_code == 200:
+            if response.status_code == 201:
+                user = User(email=form.data.email,
+                            username=form.data.username,
+                            public_id=response.json()['public_id'])
+                db.session.add(user)
+                db.session.commit()
                 return render_template('verify_email.html')
     return render_template('signup.html', title='Sign Up', form=form)
 

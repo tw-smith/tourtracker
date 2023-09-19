@@ -19,10 +19,10 @@
         <h1>Log In</h1>
         <form class="form" action="" method="post" novalidate>
             {{ form.hidden_tag() }}
-            {% for error in form.email.errors %}
+            {% for error in form.username.errors %}
                 <p class="form__error">{{ error }}</p>
             {% endfor %}
-            {{ form.email(class_="form__input") }}
+            {{ form.username(class_="form__input") }}
             {% for error in form.password.errors %}
                 <p class="form__error">{{ error }}</p>
             {% endfor %}

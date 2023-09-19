@@ -12,7 +12,7 @@ class Tour(db.Model):
     # auto_refresh = db.Column(db.Boolean(1))
     #refresh_interval = db.Column(db.Integer)
     #last_refresh = db.Column(db.Integer)
-    user_id = db.Column(db.String(50), db.ForeignKey('user.uuid'), index=True)
+    user_id = db.Column(db.String(50), db.ForeignKey('user.public_id'), index=True)
     tour_activities = db.relationship('TourActivities', backref='tour', lazy='dynamic', cascade='all, delete')
 
     def __init__(self, tour_name, start_date, end_date, user_id):
@@ -37,7 +37,7 @@ class TourActivities(db.Model):
     activity_date = db.Column(db.Integer)
     summary_polyline = db.Column(db.String(100))
     parent_tour = db.Column(db.String(50), db.ForeignKey('tour.tour_uuid'), primary_key=True)
-    user_id = db.Column(db.String(50), db.ForeignKey('user.uuid'), index=True)
+    user_id = db.Column(db.String(50), db.ForeignKey('user.public_id'), index=True)
 
     def __init__(self, strava_activity_id, activity_name, activity_date, summary_polyline, parent_tour, user_id):
         self.strava_activity_id = strava_activity_id

@@ -1,6 +1,6 @@
 from flask import render_template, make_response, redirect, url_for, flash, request, app
 from flask_jwt_extended import jwt_required, get_jwt_identity, current_user
-from tourtracker_app import db
+from tourtracker_app import db, jwt as jwt_extended
 from tourtracker_app.models.tour_models import Tour, TourActivities
 from tourtracker_app.models.strava_api_models import StravaAccessToken, StravaRefreshToken
 from tourtracker_app.main import bp
@@ -15,11 +15,26 @@ from tourtracker_app.strava_api_auth.strava_api_utilities import get_strava_acti
 # TODO: update tests
 
 
+@jwt_extended.invalid_token_loader
+def invalid_token(reason):
+    return redirect(url_for('auth.login'))
+
+
+@jwt_extended.unauthorized_loader
+def unauthorised_loader(reason):
+    return redirect(url_for('auth.login'))
+
+
 @bp.route('/', methods=['GET'])
 @bp.route('/index', methods=['GET'])
+@jwt_required(optional=True, locations=['query_string'])
 def index():
-    if current_user.is_authenticated:
-        return redirect(url_for('main.user_profile'))
+    print('in index route')
+    if current_user:
+        token = request.args.get('jwt')
+        redirect_url = f"{url_for('main.user_profile')}?jwt={token}"
+        return redirect(redirect_url)
+        #return redirect(url_for('main.user_profile'))
     return render_template('index.html')
 
 
@@ -28,16 +43,17 @@ def timestamp_to_str(timestamp):
     return date.fromtimestamp(timestamp)
 
 @bp.route('/profile')
-@jwt_required()
+@jwt_required(locations=['query_string', 'headers'])
 def user_profile():
     form = TourForm()
+    print(current_user.username)
     if current_user.strava_athlete_id is not None: # TODO probably a better/more robust way to do this
         strava_authenticated = True
     else:
         strava_authenticated = False
 
     return render_template('user_profile.html',
-                           email=current_user.email,
+                           username=current_user.username,
                            strava_authenticated=strava_authenticated,
                            is_admin=current_user.isadmin,
                            user_tours=current_user.tours,

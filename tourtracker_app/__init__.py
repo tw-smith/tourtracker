@@ -67,6 +67,9 @@ def create_app(config_class=Config):
         app.config["STRAVA_REDIRECT_URL"] = public_url + '/strava/token_exchange'
         init_webhooks(public_url)
 
+    if app.config['TESTING'] is True:
+        app.config.from_object(DevelopmentConfig)
+
     else:
         app.config.from_object(ProductionConfig)
     db.init_app(app)
@@ -79,7 +82,7 @@ def create_app(config_class=Config):
     
 
     # AUTH
-    login.init_app(app)
+    #login.init_app(app)
     mail.init_app(app)
     jwt.init_app(app)
 
